@@ -27,6 +27,7 @@ public class GobangGUI extends JFrame{
     private int player = 0;
     private int now = 0;
     private int[] highlight = {-1, -1};
+	private int difficulty = 6;
 
     public GobangGUI(){
         Container maincon = getContentPane();
@@ -95,8 +96,13 @@ public class GobangGUI extends JFrame{
 		setLocation(100, 50);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        game = new Game(0);
+        game = new Game(0, difficulty);
     }
+
+	public void setDifficulty(int val){
+		difficulty = val;
+		game.setMaxStep(val);
+	}
 
     public void open() {
 		setVisible(true);
@@ -116,7 +122,7 @@ public class GobangGUI extends JFrame{
         highlight[0] = -1;
         highlight[1] = -1;
         isStart = false;
-        game = new Game(0);
+        game = new Game(0, difficulty);
     }
 
     public void AIact(){

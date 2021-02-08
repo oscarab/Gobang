@@ -11,6 +11,7 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
 
 public class GameGUI extends JFrame{
@@ -39,6 +40,13 @@ public class GameGUI extends JFrame{
 
 		JButton setting = new JButton("选        项");
 		setting.setFont(new Font("Dialog ", 1, 25));
+		setting.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e) {
+				String[] options = { "简单", "普通" };
+				int choose = JOptionPane.showOptionDialog(null, "请选择难度：", "难度选择", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+				App.game2.setDifficulty(choose == 1?6:4);
+			}
+		});
 		box.add(Box.createVerticalStrut(20));
 		box.add(setting);
 

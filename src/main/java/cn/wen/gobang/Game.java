@@ -17,14 +17,14 @@ public class Game {
     private final int TABLE_SIZE = 1<<24;
     private final int MIN = -2147483647;
     private final int MAX = 2147483647;
-    private final int MAX_STEP = 6;
+    private       int MAX_STEP = 6;
 
     private long[][] whiteZobrist = new long[15][15];
     private long[][] blackZobrist = new long[15][15];
     private long key;
     private zobrist[] hashtable = new zobrist[TABLE_SIZE];
 
-    public Game(int AI){
+    public Game(int AI, int difficulty){
         SecureRandom random = new SecureRandom();
         key = random.nextLong();
         for(int i = 0; i < 15;i++){
@@ -35,6 +35,11 @@ public class Game {
         }
 
         this.AI = AI;
+        this.MAX_STEP = difficulty;
+    }
+
+    public void setMaxStep(int val){
+        MAX_STEP = val;
     }
 
     public void setAI(int val){
