@@ -123,6 +123,7 @@ public class GobangGUI extends JFrame{
         highlight[1] = -1;
         isStart = false;
         game = new Game(0, difficulty);
+		mapUI.repaint();
     }
 
     public void AIact(){
