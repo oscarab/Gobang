@@ -13,6 +13,7 @@ public class Game {
 
     private List<node> hasChess = new ArrayList<node>();
     private int hasChessCnt = 0;
+    private node last;
 
     private final int TABLE_SIZE = 1<<24;
     private final int MIN = -2147483647;
@@ -55,6 +56,10 @@ public class Game {
         return gamemap[x][y];
     }
 
+    public node getLast(){
+        return last;
+    }
+
     public boolean peoplePut(int x, int y){
         put(x, y, ((AI + 1)&1) + 1);
         gamemap[x][y] = ((AI + 1)&1) + 1;
@@ -71,6 +76,7 @@ public class Game {
         node best = dfs(0, MAX_STEP, MAX, MIN, 0, 0, AI + 1);
         put(best.x, best.y, AI + 1);
         gamemap[best.x][best.y] = AI + 1;
+        last = new node(0, best.x, best.y);
         return isWin(best.x, best.y);
     }
 
@@ -134,6 +140,7 @@ public class Game {
             return 0;
     }
 
+    //评估某一方局势
     private int evaluate(int role){
         int res = 0;
         //bool visit[15][15] = {0};
@@ -171,6 +178,7 @@ public class Game {
         return res;
     }
 
+    //评估单个位置
     private int evaluate(int x, int y, int role){
         int res = 0;
         for(int a = 0; a < 4; a++){
@@ -199,6 +207,7 @@ public class Game {
         return res;
     }
 
+    //生成可下子位置
     private List<node> generate(){
         List<node> genPlace = new ArrayList<>();
         boolean visit[][] = new boolean[15][15];

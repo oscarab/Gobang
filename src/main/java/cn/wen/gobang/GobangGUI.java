@@ -134,8 +134,9 @@ public class GobangGUI extends JFrame{
                         mapUI.repaint();
                         gameEnd(AI);
                     }
-                    // highlight[0] = AIs[0];
-					// highlight[1] = AIs[1];
+					Game.node ai = game.getLast();
+                    highlight[0] = ai.x;
+					highlight[1] = ai.y;
                     now = 0;
                     mapUI.repaint();
 				}
