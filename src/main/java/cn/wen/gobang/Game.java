@@ -67,13 +67,7 @@ public class Game {
     }
 
     public boolean AIput(){
-        // node best = new node(0, 0, 0);
-        // for(int i = 2; i <= MAX_STEP; i += 2){
-        //     best = dfs(0, i, MAX, MIN, 0, 0, AI + 1);
-        //     if(best.score > 800000)
-        //         break;
-        // }
-        node best = dfs(0, MAX_STEP, MAX, MIN, 0, 0, AI + 1);
+        node best = dfs(0, MAX, MIN, 0, 0, AI + 1);
         put(best.x, best.y, AI + 1);
         gamemap[best.x][best.y] = AI + 1;
         last = new node(0, best.x, best.y);
@@ -248,7 +242,7 @@ public class Game {
         key ^= (role == 1? blackZobrist[x][y]:whiteZobrist[x][y]);
     }
 
-    private node dfs(int step, int maxstep, int alpha, int beta, int x, int y, int role){
+    private node dfs(int step, int alpha, int beta, int x, int y, int role){
         if(step > 0){
             zobrist zo = hashtable[(int) (key & (TABLE_SIZE-1))];
             if(zo != null && zo.deep <= step && key == zo.key){
@@ -263,7 +257,7 @@ public class Game {
             hashtable[(int) (key & (TABLE_SIZE-1))] = new zobrist(key, best.score, step);
             return best;
         }
-        if(step == maxstep){
+        if(step == MAX_STEP){
             int aiScore = evaluate(role);
             int humanScore = evaluate((role&1) + 1);
             best.score = aiScore - humanScore;
@@ -286,7 +280,7 @@ public class Game {
                 public int compare(node o1, node o2) {
                     return o1.score - o2.score;
                 }
-            });           
+            });
         for(int i = 0; i < len; i++){
             if(best.score > alpha && AI == role - 1)
                 return best;
@@ -295,7 +289,7 @@ public class Game {
             node p = points.get(i);
     
             put(p.x, p.y, role);
-            node point = dfs(step + 1, maxstep, min, max, p.x, p.y, (role&1) + 1);
+            node point = dfs(step + 1, min, max, p.x, p.y, (role&1) + 1);
             remove(p.x, p.y, role);
             point.x = p.x;
             point.y = p.y;

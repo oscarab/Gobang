@@ -181,9 +181,9 @@ public class GobangGUI extends JFrame{
 			g2.setFont(new Font("aa", Font.BOLD, 25));
 			g2.drawString("玩家：", 620, 50);
 			g2.drawString("电脑：", 620, 120);
-			if(now == 1)
+			if(isStart && now == 1)
 				g2.drawString("正在思考...", 620, 190);
-			else if(isStart)
+			else if(isStart && now == 0)
 				g2.drawString("现在是你的回合", 620, 190);
 
 			if (isStart) {
