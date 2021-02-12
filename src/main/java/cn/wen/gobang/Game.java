@@ -14,6 +14,7 @@ public class Game {
     private List<node> hasChess = new ArrayList<node>();
     private int hasChessCnt = 0;
     private node last;
+    private ACautomata ac = new ACautomata();
 
     private final int TABLE_SIZE = 1<<24;
     private final int MIN = -2147483647;
