@@ -21,21 +21,20 @@ public class Game {
     private final int MAX = 2147483647;
     private       int MAX_STEP = 6;
 
-    private long[][] whiteZobrist = new long[15][15];
-    private long[][] blackZobrist = new long[15][15];
+    private long[][][] boardZobrist = new long[2][15][15];
     private long key;
     private zobrist[] hashtable = new zobrist[TABLE_SIZE];
 
     public Game(int AI, int difficulty){
         SecureRandom random = new SecureRandom();
         key = random.nextLong();
-        for(int i = 0; i < 15;i++){
-            for(int j = 0; j < 15; j++){
-                whiteZobrist[i][j] = random.nextLong();
-                blackZobrist[i][j] = random.nextLong();
+        for(int k = 0; k < 2; k++){
+            for(int i = 0; i < 15;i++){
+                for(int j = 0; j < 15; j++){
+                    boardZobrist[k][i][j] = random.nextLong();
+                }
             }
         }
-
         this.AI = AI;
         this.MAX_STEP = difficulty;
     }
@@ -232,14 +231,14 @@ public class Game {
         GameMap[x][y] = role;
         hasChessCnt++;
         hasChess.add(new node(0, x, y));
-        key ^= (role == 1? blackZobrist[x][y]:whiteZobrist[x][y]);
+        key ^= boardZobrist[role - 1][x][y];
     }
 
     private void remove(int x, int y, int role){
         hasChess.remove(hasChessCnt - 1);
         hasChessCnt--;
         GameMap[x][y] = 0;
-        key ^= (role == 1? blackZobrist[x][y]:whiteZobrist[x][y]);
+        key ^= boardZobrist[role - 1][x][y];
     }
 
     private node dfs(int step, int alpha, int beta, int x, int y, int role){
