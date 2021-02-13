@@ -14,7 +14,7 @@ public class Game {
     private List<node> hasChess = new ArrayList<node>();
     private int hasChessCnt = 0;
     private node last;
-    private ACautomata ac = new ACautomata();
+    //private ACautomata ac = new ACautomata();
 
     private final int TABLE_SIZE = 1<<24;
     private final int MIN = -2147483647;
@@ -138,12 +138,9 @@ public class Game {
     //评估某一方局势
     private int evaluate(int role){
         int res = 0;
-        //bool visit[15][15] = {0};
         for(int i = 0; i < hasChessCnt; i++){
             int x = hasChess.get(i).x;
             int y = hasChess.get(i).y;
-            if(GameMap[x][y] != role) continue;
-            //visit[x][y] = true;
     
             for(int a = 0; a < 4; a++){     //四个方向
                 short block = 0;            //被堵住的数量
@@ -154,11 +151,10 @@ public class Game {
                             block++;
                             break;
                         }
-                        //visit[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] = true;
-                        if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == role){    //连子
+                        if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == GameMap[x][y]){    //连子
                             line++;
                         }
-                        else if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == role % 2 + 1){  //堵塞
+                        else if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == GameMap[x][y] % 2 + 1){  //堵塞
                             block++;
                             break;
                         }
@@ -167,7 +163,10 @@ public class Game {
                         }
                     }
                 }
-                res += getScore(line, block);
+                if(GameMap[x][y] != role)
+                    res -= getScore(line, block);
+                else
+                    res += getScore(line, block);
             }
         }
         return res;
@@ -253,15 +252,14 @@ public class Game {
     
         node best = new node((AI == role - 1)? MIN:MAX, 0, 0);
         if(step > 0 && isWin(x, y)){
-            int score = evaluate(role) - evaluate((role&1) + 1);
+            int score = evaluate(role);
             best.score = (AI != role - 1)? -score:score;
             hashtable[(int) (key & (TABLE_SIZE-1))] = new zobrist(key, best.score, step);
             return best;
         }
         if(step == MAX_STEP){
             int aiScore = evaluate(role);
-            int humanScore = evaluate((role&1) + 1);
-            best.score = aiScore - humanScore;
+            best.score = aiScore;
             hashtable[(int) (key & (TABLE_SIZE-1))] = new zobrist(key, best.score, step);
             return best;
         }
