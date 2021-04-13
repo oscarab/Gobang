@@ -1,77 +1,72 @@
 package cn.wen.gobang;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
+
+import cn.wen.gobang.AI.HashTable;
+import cn.wen.gobang.AI.Movement;
+import cn.wen.gobang.AI.Util;
 
 public class Game {
     private int[][] GameMap = new int[15][15];
-    private int[][] gamemap = new int[15][15];
-    private int AI;
+    private int[][] gameOut = new int[15][15];
+    private int currentRole = 1;    // 当前执子的颜色 1黑2白
     private int[][][] dir = {{{-1,0},{1,0}}, {{0,1},{0,-1}}, {{-1,-1},{1,1}}, {{-1,1},{1,-1}}};
 
-    private List<node> hasChess = new ArrayList<node>();
+    private List<Movement> hasChess = new ArrayList<Movement>();
     private int hasChessCnt = 0;
-    private node last;
-    //private ACautomata ac = new ACautomata();
+    private Movement bestMove;
 
-    private final int TABLE_SIZE = 1<<24;
-    private final int MIN = -2147483647;
-    private final int MAX = 2147483647;
-    private       int MAX_STEP = 6;
+    private HashTable hashTable;
 
-    private long[][][] boardZobrist = new long[2][15][15];
-    private long key;
-    private zobrist[] hashtable = new zobrist[TABLE_SIZE];
+    public static final int NONE_SCORE = -2000000000;
+    public static final Movement NONE_MOVE = new Movement(-1, -1, -1);
+    public static final int MAX_SCORE = 1000000000;
+    public static final int WIN_SCORE = MAX_SCORE - 24;
+    private int step;
+    private int maxDepth = 6;
 
-    public Game(int AI, int difficulty){
-        SecureRandom random = new SecureRandom();
-        key = random.nextLong();
-        for(int k = 0; k < 2; k++){
-            for(int i = 0; i < 15;i++){
-                for(int j = 0; j < 15; j++){
-                    boardZobrist[k][i][j] = random.nextLong();
-                }
-            }
-        }
-        this.AI = AI;
-        this.MAX_STEP = difficulty;
+    public Game(int difficulty){
+        this.maxDepth = difficulty;
+        hashTable = new HashTable();
     }
 
     public void setMaxStep(int val){
-        MAX_STEP = val;
+        maxDepth = val;
     }
 
-    public void setAI(int val){
-        AI = val;
-    }
-
-    public void set(int x, int y, int val){
-        put(x, y, val);
-        gamemap[x][y] = val;
+    public Movement getLastMove(){
+        return bestMove;
     }
 
     public int get(int x, int y){
-        return gamemap[x][y];
+        return gameOut[x][y];
     }
 
-    public node getLast(){
-        return last;
+    public boolean directMove(int x, int y){
+        gameOut[x][y] = currentRole;
+        return makeMove(x, y);
     }
 
-    public boolean peoplePut(int x, int y){
-        put(x, y, ((AI + 1)&1) + 1);
-        gamemap[x][y] = ((AI + 1)&1) + 1;
-        return isWin(x, y);
-    }
+    public boolean AIthink(){
+        int score = 0;
+        step = 0;
+        hashhit = 0;
+        hashTable.clear();
+        long start = System.currentTimeMillis();
 
-    public boolean AIput(){
-        node best = dfs(0, MAX, MIN, 0, 0, AI + 1);
-        put(best.x, best.y, AI + 1);
-        gamemap[best.x][best.y] = AI + 1;
-        last = new node(0, best.x, best.y);
-        return isWin(best.x, best.y);
+        for(maxDepth = 1; maxDepth <= 6; maxDepth++){
+            score = alphaBetaSearch(maxDepth, NONE_SCORE, -NONE_SCORE);
+            System.out.println((System.currentTimeMillis() - start) + "ms");
+            if(score > WIN_SCORE) break;
+        }
+        System.out.println("best score:" + score);
+        gameOut[bestMove.getX()][bestMove.getY()] = currentRole;
+
+        System.out.println(hashhit);
+        
+        return makeMove(bestMove.getX(), bestMove.getY());
     }
 
     private boolean isWin(int x, int y){
@@ -95,51 +90,12 @@ public class Game {
         return false;
     }
 
-    private int getScore(int line, int block){
-        switch (line){
-            case 9:
-            case 8:
-            case 7:
-            case 6:
-            case 5:
-                return 900000;      //连5
-            case 4:
-                if(block == 0){     //活4
-                    return 10000;
-                }
-                else if(block == 1){
-                    return 1000;
-                }
-                break;
-            case 3:
-                if(block == 0){
-                    return 1000;
-                }
-                else if(block == 1){
-                    return 100;
-                }
-                break;
-            case 2:
-                if(block == 0){
-                    return 100;
-                }
-                else if(block == 1){
-                    return 10;
-                }
-                break;
-            default:
-                if(block == 0)
-                    return 10;
-            }
-            return 0;
-    }
-
-    //评估某一方局势
-    private int evaluate(int role){
+    //评估当前一方局势
+    private int evaluate(){
         int res = 0;
         for(int i = 0; i < hasChessCnt; i++){
-            int x = hasChess.get(i).x;
-            int y = hasChess.get(i).y;
+            int x = hasChess.get(i).getX();
+            int y = hasChess.get(i).getY();
     
             for(int a = 0; a < 4; a++){     //四个方向
                 short block = 0;            //被堵住的数量
@@ -153,7 +109,7 @@ public class Game {
                         if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == GameMap[x][y]){    //连子
                             line++;
                         }
-                        else if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == GameMap[x][y] % 2 + 1){  //堵塞
+                        else if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == Util.getOpponent(GameMap[x][y])){  //堵塞
                             block++;
                             break;
                         }
@@ -162,10 +118,10 @@ public class Game {
                         }
                     }
                 }
-                if(GameMap[x][y] != role)
-                    res -= getScore(line, block);
+                if(GameMap[x][y] != currentRole)
+                    res -= Util.getScore(line, block);
                 else
-                    res += getScore(line, block);
+                    res += Util.getScore(line, block);
             }
         }
         return res;
@@ -186,7 +142,7 @@ public class Game {
                     if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == role){    //连子
                         line++;
                     }
-                    else if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == (role&1) + 1){  //堵塞
+                    else if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == Util.getOpponent(role)){  //堵塞
                         block++;
                         break;
                     }
@@ -195,19 +151,19 @@ public class Game {
                     }
                 }
             }
-            res += getScore(line, block);
+            res += Util.getScore(line, block);
         }
         return res;
     }
 
     //生成可下子位置
-    private List<node> generate(){
-        List<node> genPlace = new ArrayList<>();
+    private List<Movement> generate(){
+        List<Movement> moveLists = new ArrayList<>();
         boolean visit[][] = new boolean[15][15];
 
         for(int i = 0; i < hasChessCnt; i++){
-            node p = hasChess.get(i);
-            int x = p.x, y = p.y;
+            Movement p = hasChess.get(i);
+            int x = p.getX(), y = p.getY();
             for(int a = 0; a < 4; a++){
                 for(int b = 0; b < 2; b++){
                     for(int cnt = 1; cnt <= 2; cnt++){
@@ -218,115 +174,102 @@ public class Game {
     
                         if(GameMap[x1][y1] == 0 && !visit[x1][y1]){
                             visit[x1][y1] = true;
-                            genPlace.add(new node(evaluate(x1, y1, AI+1) - evaluate(x1, y1, ((AI+1)&1) + 1), x1, y1));
+                            Movement move = new Movement(evaluate(x1, y1, currentRole) - evaluate(x1, y1, Util.getOpponent(currentRole)), x1, y1);
+                            moveLists.add(move);
                         }
                     }
                 }
             }
         }
-        return genPlace;
+        return moveLists;
     }
 
-    private void put(int x, int y, int role){
-        GameMap[x][y] = role;
+    private boolean makeMove(int x, int y){
+        step++;
+        GameMap[x][y] = currentRole;
         hasChessCnt++;
-        hasChess.add(new node(0, x, y));
-        key ^= boardZobrist[role - 1][x][y];
+        hasChess.add(new Movement(0, x, y));
+        hashTable.update(x, y, currentRole);
+
+        currentRole = currentRole == 1? 2:1;
+        return isWin(x, y);
     }
 
-    private void remove(int x, int y, int role){
+    private void unMakeMove(int x, int y){
+        step--;
+        GameMap[x][y] = 0;
         hasChess.remove(hasChessCnt - 1);
         hasChessCnt--;
-        GameMap[x][y] = 0;
-        key ^= boardZobrist[role - 1][x][y];
+        hashTable.update(x, y, currentRole);
+
+        currentRole = currentRole == 1? 2:1;
     }
 
-    private node dfs(int step, int alpha, int beta, int x, int y, int role){
-        if(step > 0){
-            zobrist zo = hashtable[(int) (key & (TABLE_SIZE-1))];
-            if(zo != null && zo.deep <= step && key == zo.key){
-                return new node(zo.score, 0, 0);
-            } 
+    int hashhit = 0;
+    private int alphaBetaSearch(int depth, int alpha, int beta){
+        int score = 0;
+        int best;
+        Movement move = NONE_MOVE.clone(), gooMove = NONE_MOVE.clone();
+        List<Movement> moveLists = new ArrayList<>();
+
+        score = hashTable.readHashTable(depth, step, alpha, beta, move);
+        if(score != NONE_SCORE){
+            hashhit++;
+            return score;
         }
-    
-        node best = new node((AI == role - 1)? MIN:MAX, 0, 0);
-        if(step > 0 && isWin(x, y)){
-            int score = evaluate(role);
-            best.score = (AI != role - 1)? -score:score;
-            hashtable[(int) (key & (TABLE_SIZE-1))] = new zobrist(key, best.score, step);
-            return best;
+
+        best = NONE_SCORE;
+        boolean isAlpha = true;
+
+        if(depth <= 0){
+            score = evaluate();
+            hashTable.saveHashTable(depth, step, score, HashTable.hashExact, NONE_MOVE);
+            return score;
         }
-        if(step == MAX_STEP){
-            int aiScore = evaluate(role);
-            best.score = aiScore;
-            hashtable[(int) (key & (TABLE_SIZE-1))] = new zobrist(key, best.score, step);
-            return best;
+
+        if(!move.equals(NONE_MOVE) && GameMap[move.getX()][move.getY()] == 0) {
+            Movement temp = move.clone();
+            temp.setScore(MAX_SCORE);
+            moveLists.add(temp);
         }
-    
-        int max = MIN;
-        int min = MAX;
-        List<node> points = generate();      //生成可下子的位置
-        int len = points.size();
-        if(AI == role - 1)
-            points.sort(new Comparator<node>(){
-				public int compare(node o1, node o2) {
-					return o2.score - o1.score;
-				}
-            });
-        else
-            points.sort(new Comparator<node>(){
-                public int compare(node o1, node o2) {
-                    return o1.score - o2.score;
-                }
-            });
-        for(int i = 0; i < len; i++){
-            if(best.score > alpha && AI == role - 1)
-                return best;
-            if(best.score < beta && AI != role - 1)
-                return best;
-            node p = points.get(i);
-    
-            put(p.x, p.y, role);
-            node point = dfs(step + 1, min, max, p.x, p.y, (role&1) + 1);
-            remove(p.x, p.y, role);
-            point.x = p.x;
-            point.y = p.y;
-    
-            min = point.score < min? point.score:min;
-            max = point.score > max? point.score:max;
-    
-            if(AI == role - 1){             //MAX层
-                if(point.score > best.score){
-                    best = point;
-                }
+        moveLists.addAll(generate());
+        Collections.sort(moveLists);
+        int moveNum = moveLists.size();
+
+        for(int i = 0; i < moveNum; i++){
+            move = moveLists.get(i);
+            if(makeMove(move.getX(), move.getY())){
+                score = MAX_SCORE - step;
             }
-            else{                           //MIN层
-                if(point.score < best.score){
-                    best = point;
+            else{
+                score = -alphaBetaSearch(depth - 1, -beta, -alpha);
+            }
+            unMakeMove(move.getX(), move.getY());
+
+            if(score >= beta){
+                hashTable.saveHashTable(depth, step, beta, HashTable.hashBeta, move);
+                return beta;
+            }
+            if(score > best){
+                best = score;
+                gooMove = move;
+                if(score > alpha){
+                    isAlpha = false;
+                    alpha = score;
+                    // 若为第一层，传出着法
+                    if(depth == maxDepth)
+                        bestMove = move;
                 }
             }
         }
-        hashtable[(int) (key & (TABLE_SIZE-1))] = new zobrist(key, best.score, step);
-        return best;
+
+        if(isAlpha){
+            hashTable.saveHashTable(depth, step, alpha, HashTable.hashAlpha, gooMove);
+        }
+        else{
+            hashTable.saveHashTable(depth, step, best, HashTable.hashExact, gooMove);
+        }
+        return alpha;
     }
 
-    public class zobrist{
-        public long key;
-        public int score;
-        public int deep;
-        public zobrist(long key, int score, int deep){
-            this.key = key;
-            this.score = score;
-            this.deep = deep;
-        }
-    }
-    public class node{
-        public int score;
-        public int x, y;
-        public node(int score, int x, int y){
-            this.score = score;
-            this.x = x;
-            this.y = y;
-        }
-    }
 }

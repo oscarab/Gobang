@@ -18,6 +18,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
+import cn.wen.gobang.AI.Movement;
+
 public class GobangGUI extends JFrame{
     private static final long serialVersionUID = 1L;
     public JPanel mapUI;
@@ -45,7 +47,7 @@ public class GobangGUI extends JFrame{
 							for (int j = 30; j <= 590; j = j + 40) {
 								if (i - 15 <= x && x <= i + 15 && j - 15 <= y && y <= j + 15
 										&& game.get((i - 30) / 40, (j - 30) / 40) == 0) {
-									if (game.peoplePut((i - 30) / 40, (j - 30) / 40)) {
+									if (game.directMove((i - 30) / 40, (j - 30) / 40)) {
                                         mapUI.repaint();
 										gameEnd(player);
                                         return;
@@ -64,8 +66,7 @@ public class GobangGUI extends JFrame{
 						isStart = true;
 
 						now = 1;
-                        game.setAI(AI - 1);
-                        game.set(7, 7, AI);
+                        game.directMove(7, 7);
 						now = 0;
 
 						mapUI.repaint();
@@ -74,7 +75,6 @@ public class GobangGUI extends JFrame{
 						AI = 2;
 						isStart = true;
 						now = 0;
-                        game.setAI(AI - 1);
 
 						mapUI.repaint();
                         AIact();
@@ -96,7 +96,7 @@ public class GobangGUI extends JFrame{
 		setLocation(100, 50);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        game = new Game(0, difficulty);
+        game = new Game(difficulty);
     }
 
 	public void setDifficulty(int val){
@@ -122,7 +122,7 @@ public class GobangGUI extends JFrame{
         highlight[0] = -1;
         highlight[1] = -1;
         isStart = false;
-        game = new Game(0, difficulty);
+        game = new Game(difficulty);
 		mapUI.repaint();
     }
 
@@ -130,13 +130,13 @@ public class GobangGUI extends JFrame{
 		if (now == 1) { // 若为电脑执子，打开AI开始下棋
 			Thread aithread = new Thread() {
 				public void run() {
-					if(game.AIput()){
+					if(game.AIthink()){
                         mapUI.repaint();
                         gameEnd(AI);
                     }
-					Game.node ai = game.getLast();
-                    highlight[0] = ai.x;
-					highlight[1] = ai.y;
+					Movement ai = game.getLastMove();
+                    highlight[0] = ai.getX();
+					highlight[1] = ai.getY();
                     now = 0;
                     mapUI.repaint();
 				}
