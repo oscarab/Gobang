@@ -307,7 +307,9 @@ public class Game {
         boolean isAlpha = true;
 
         if(depth <= 0){
+            long st = System.nanoTime();
             score = evaluate();
+            System.out.println(System.nanoTime() - st);
             hashTable.saveHashTable(depth, step, score, HashTable.hashExact, NONE_MOVE);
             return score;
         }
