@@ -88,6 +88,8 @@ public class Game {
         int score = 0;
         step = 0;
         hashhit = 0;
+        all_beta = 0;
+        all_node = 0;
         hashTable.clear();
         long start = System.currentTimeMillis();
 
@@ -97,6 +99,8 @@ public class Game {
             if(score > WIN_SCORE) break;
         }
         System.out.println("best score:" + score);
+        System.out.println("node:" + all_node);
+        System.out.println("beta:" + all_beta);
         gameOut[bestMove.getX()][bestMove.getY()] = currentRole;
 
         System.out.println(hashhit);
@@ -299,6 +303,8 @@ public class Game {
     }
 
     int hashhit = 0;
+    int all_node = 0;
+    int all_beta = 0;
     private int alphaBetaSearch(int depth, int alpha, int beta){
         int score = 0;
         int best;
@@ -320,9 +326,7 @@ public class Game {
             return score;
         }
 
-        long st = System.nanoTime();
         moveLists = generate();
-        System.out.println(System.nanoTime() - st);
         if(!move.equals(NONE_MOVE) && GameMap[move.getPosition()] == 0) {
             Movement temp = move.clone();
             temp.setScore(MAX_SCORE);
@@ -330,6 +334,7 @@ public class Game {
         }
         Collections.sort(moveLists);
         int moveNum = moveLists.size();
+        all_node += moveNum;
 
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
@@ -342,6 +347,7 @@ public class Game {
             unMakeMove(move.getPosition());
 
             if(score >= beta){
+                all_beta++;
                 hashTable.saveHashTable(depth, step, beta, HashTable.hashBeta, move);
                 return beta;
             }
