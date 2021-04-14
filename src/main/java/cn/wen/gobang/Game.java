@@ -25,6 +25,12 @@ public class Game {
     private StringBuilder[] strBiasRight = new StringBuilder[30];
     private int currentRole = 1;                    // 当前执子的颜色 1黑2白
 
+    private int[] rowScore = new int[15];
+    private int[] colScore = new int[15];
+    private int[] biasLeftScore = new int[30];
+    private int[] biasRightScore = new int[30];
+    private int currentScore;
+
     private List<Movement> hasChess = new ArrayList<Movement>();
     private int hasChessCnt = 0;
     private Movement bestMove;
@@ -85,7 +91,7 @@ public class Game {
         hashTable.clear();
         long start = System.currentTimeMillis();
 
-        for(maxDepth = 1; maxDepth <= 4; maxDepth++){
+        for(maxDepth = 1; maxDepth <= 6; maxDepth++){
             score = alphaBetaSearch(maxDepth, NONE_SCORE, -NONE_SCORE);
             System.out.println((System.currentTimeMillis() - start) + "ms");
             if(score > WIN_SCORE) break;
@@ -107,15 +113,7 @@ public class Game {
 
     //评估当前一方局势
     private int evaluate(){
-        int res = 0;
-        for(int i = 0; i < 15; i++){
-            res += Util.presetScore[Integer.parseInt(strRow[i].toString(), 3)];
-            res += Util.presetScore[Integer.parseInt(strCol[i].toString(), 3)];
-        }
-        for(int i = 0; i < 29; i++){
-            res += Util.presetScore[Integer.parseInt(strBiasLeft[i].toString(), 3)];
-            res += Util.presetScore[Integer.parseInt(strBiasRight[i].toString(), 3)];
-        }
+        int res = currentScore;
         res = currentRole == 1? res:-res;
         return res;
     }
@@ -126,20 +124,11 @@ public class Game {
         int row = Util.getRow(pos), col = Util.getCol(pos);
         int lbindex = Util.preBiasLeftIndex[pos], rbindex = Util.preBiasRightIndex[pos];
 
-        strRow[row].setCharAt(col, (char) ('0' + currentRole));
-        strCol[col].setCharAt(row, (char) ('0' + currentRole));
-        strBiasLeft[lbindex].setCharAt(Util.preBiasLeftPos[pos], (char) ('0' + currentRole));
-        strBiasRight[rbindex].setCharAt(Util.preBiasRightPos[pos], (char) ('0' + currentRole));
+        res += rowScore[row];
+        res += colScore[col];
+        res += biasLeftScore[lbindex];
+        res += biasRightScore[rbindex];
 
-        res += Util.presetScore[Integer.parseInt(strRow[row].toString(), 3)];
-        res += Util.presetScore[Integer.parseInt(strCol[col].toString(), 3)];
-        res += Util.presetScore[Integer.parseInt(strBiasLeft[lbindex].toString(), 3)];
-        res += Util.presetScore[Integer.parseInt(strBiasRight[rbindex].toString(), 3)];
-
-        strRow[row].setCharAt(col, '0');
-        strCol[col].setCharAt(row, '0');
-        strBiasLeft[lbindex].setCharAt(Util.preBiasLeftPos[pos], '0');
-        strBiasRight[rbindex].setCharAt(Util.preBiasRightPos[pos], '0');
         return res;
     }
 
@@ -253,6 +242,8 @@ public class Game {
         strCol[col].setCharAt(row, (char) ('0' + currentRole));
         strBiasLeft[lbindex].setCharAt(Util.preBiasLeftPos[pos], (char) ('0' + currentRole));
         strBiasRight[rbindex].setCharAt(Util.preBiasRightPos[pos], (char) ('0' + currentRole));
+        // 更新分数
+        updateScore(row, col, lbindex, rbindex);
 
         hasChessCnt++;
         hasChess.add(new Movement(0, pos));
@@ -282,12 +273,29 @@ public class Game {
         strCol[col].setCharAt(row, '0');
         strBiasLeft[lbindex].setCharAt(Util.preBiasLeftPos[pos], '0');
         strBiasRight[rbindex].setCharAt(Util.preBiasRightPos[pos], '0');
+        // 更新分数
+        updateScore(row, col, lbindex, rbindex);
 
         hasChess.remove(hasChessCnt - 1);
         hasChessCnt--;
         hashTable.update(pos, currentRole);
 
         currentRole = currentRole == 1? 2:1;
+    }
+
+    private void updateScore(int row, int col, int lbindex, int rbindex){
+        int newRowScore = Util.presetScore[Integer.parseInt(strRow[row].toString(), 3)];
+        currentScore += newRowScore - rowScore[row];
+        rowScore[row] = newRowScore;
+        int newColScore = Util.presetScore[Integer.parseInt(strCol[col].toString(), 3)];
+        currentScore += newColScore - colScore[col];
+        colScore[col] = newColScore;
+        int newLeftScore = Util.presetScore[Integer.parseInt(strBiasLeft[lbindex].toString(), 3)];
+        currentScore += newLeftScore - biasLeftScore[lbindex];
+        biasLeftScore[lbindex] = newLeftScore;
+        int newRightScore = Util.presetScore[Integer.parseInt(strBiasRight[rbindex].toString(), 3)];
+        currentScore += newRightScore - biasRightScore[rbindex];
+        biasRightScore[rbindex] = newRightScore;
     }
 
     int hashhit = 0;
@@ -307,14 +315,14 @@ public class Game {
         boolean isAlpha = true;
 
         if(depth <= 0){
-            long st = System.nanoTime();
             score = evaluate();
-            System.out.println(System.nanoTime() - st);
             hashTable.saveHashTable(depth, step, score, HashTable.hashExact, NONE_MOVE);
             return score;
         }
 
+        long st = System.nanoTime();
         moveLists = generate();
+        System.out.println(System.nanoTime() - st);
         if(!move.equals(NONE_MOVE) && GameMap[move.getPosition()] == 0) {
             Movement temp = move.clone();
             temp.setScore(MAX_SCORE);
