@@ -2,17 +2,15 @@ package cn.wen.gobang.AI;
 
 public class Movement implements Comparable<Movement>{
     private int score;
-    private int x, y;
-    public Movement(int score, int x, int y){
+    private int position;
+    public Movement(int score, int position){
         this.score = score;
-        this.x = x;
-        this.y = y;
+        this.position = position;
     }
 
     public void set(Movement move){
         score = move.score;
-        x = move.x;
-        y = move.y;
+        position = move.position;
     }
 
     public int getScore() {
@@ -21,29 +19,29 @@ public class Movement implements Comparable<Movement>{
     public void setScore(int score) {
         this.score = score;
     }
-    public int getX() {
-        return x;
+    public int getPosition() {
+        return position;
     }
-    public void setX(int x) {
-        this.x = x;
+    public void setPosition(int position) {
+        this.position = position;
     }
-    public int getY() {
-        return y;
+    public int getX(){
+        return Util.getCol(position);
     }
-    public void setY(int y) {
-        this.y = y;
+    public int getY(){
+        return Util.getRow(position);
     }
 
     public boolean equals(Object obj) {
         if(obj instanceof Movement){
             Movement move = (Movement) obj;
-            return move.x == x && move.y == y;
+            return move.position == position;
         }
         return false;
     }
 
     public Movement clone(){
-        return new Movement(score, x, y);
+        return new Movement(score, position);
     }
 
     public int compareTo(Movement move) {

@@ -9,10 +9,21 @@ import cn.wen.gobang.AI.Movement;
 import cn.wen.gobang.AI.Util;
 
 public class Game {
-    private int[][] GameMap = new int[15][15];
+    private int[] GameMap = new int[256];
     private int[][] gameOut = new int[15][15];
-    private int currentRole = 1;    // 当前执子的颜色 1黑2白
-    private int[][][] dir = {{{-1,0},{1,0}}, {{0,1},{0,-1}}, {{-1,-1},{1,1}}, {{-1,1},{1,-1}}};
+
+    // 位行 位列 位斜 只保存棋子的存在信息
+    private int[][] bitRow = new int[3][15];
+    private int[][] bitCol = new int[3][15];
+    private int[][] bitBiasLeft = new int[3][30];
+    private int[][] bitBiasRight = new int[3][30];
+
+    // 保存棋子的完全信息
+    private StringBuilder[] strRow = new StringBuilder[15];
+    private StringBuilder[] strCol = new StringBuilder[15];
+    private StringBuilder[] strBiasLeft = new StringBuilder[30];
+    private StringBuilder[] strBiasRight = new StringBuilder[30];
+    private int currentRole = 1;                    // 当前执子的颜色 1黑2白
 
     private List<Movement> hasChess = new ArrayList<Movement>();
     private int hasChessCnt = 0;
@@ -21,15 +32,33 @@ public class Game {
     private HashTable hashTable;
 
     public static final int NONE_SCORE = -2000000000;
-    public static final Movement NONE_MOVE = new Movement(-1, -1, -1);
+    public static final Movement NONE_MOVE = new Movement(-1, -1);
     public static final int MAX_SCORE = 1000000000;
     public static final int WIN_SCORE = MAX_SCORE - 24;
     private int step;
-    private int maxDepth = 6;
+    private int maxDepth = 4;
 
     public Game(int difficulty){
         this.maxDepth = difficulty;
         hashTable = new HashTable();
+
+        for(int role = 0; role < 3; role++){
+            for(int i = 0; i < 14; i++){
+                bitBiasLeft[role][i] = 1 >> (i + 1);
+                bitBiasLeft[role][28 - i] = 1 >> (i + 1);
+                bitBiasRight[role][i] = 1 >> (i + 1);
+                bitBiasRight[role][28 - i] = 1 >> (i + 1);
+            }
+        }
+
+        for(int i = 0; i < 15; i++){
+            strRow[i] = new StringBuilder("000000000000000");
+            strCol[i] = new StringBuilder("000000000000000");
+        }
+        for(int i = 0; i < 30; i++){
+            strBiasLeft[i] = new StringBuilder("000000000000000");
+            strBiasRight[i] = new StringBuilder("000000000000000");
+        }
     }
 
     public void setMaxStep(int val){
@@ -46,7 +75,7 @@ public class Game {
 
     public boolean directMove(int x, int y){
         gameOut[x][y] = currentRole;
-        return makeMove(x, y);
+        return makeMove((y << 4) + x);
     }
 
     public boolean AIthink(){
@@ -56,7 +85,7 @@ public class Game {
         hashTable.clear();
         long start = System.currentTimeMillis();
 
-        for(maxDepth = 1; maxDepth <= 6; maxDepth++){
+        for(maxDepth = 1; maxDepth <= 4; maxDepth++){
             score = alphaBetaSearch(maxDepth, NONE_SCORE, -NONE_SCORE);
             System.out.println((System.currentTimeMillis() - start) + "ms");
             if(score > WIN_SCORE) break;
@@ -66,141 +95,172 @@ public class Game {
 
         System.out.println(hashhit);
         
-        return makeMove(bestMove.getX(), bestMove.getY());
+        return makeMove(bestMove.getPosition());
     }
 
-    private boolean isWin(int x, int y){
-        for(int a = 0; a < 4; a++){
-            int line = 1;
-            for(int b = 0; b < 2; b++){
-                for(int cnt = 1; cnt <= 4; cnt++){
-                    int x1 = x + dir[a][b][0]*cnt;
-                    int y1 = y + dir[a][b][1]*cnt;
-                    if(x1 < 0 || x1 > 14 || y1 < 0 || y1 > 14)
-                        break;
-                    if(GameMap[x1][y1] == GameMap[x][y])
-                        line++;
-                    else
-                        break;
-                }
-            }
-            if(line >= 5)
-                return true;
-        }
-        return false;
+    private boolean isWin(int pos, int role){
+        int row = Util.getRow(pos), col = Util.getCol(pos);
+        return Util.preWin[bitRow[role][row]] ||  Util.preWin[bitCol[role][col]]
+                || Util.preWin[bitBiasLeft[role][Util.preBiasLeftIndex[pos]]]
+                || Util.preWin[bitBiasRight[role][Util.preBiasRightIndex[pos]]];
     }
 
     //评估当前一方局势
     private int evaluate(){
         int res = 0;
-        for(int i = 0; i < hasChessCnt; i++){
-            int x = hasChess.get(i).getX();
-            int y = hasChess.get(i).getY();
-    
-            for(int a = 0; a < 4; a++){     //四个方向
-                short block = 0;            //被堵住的数量
-                short line = 1;             //连子数量
-                for(int b = 0; b < 2; b++){
-                    for(int cnt = 1; cnt <= 4; cnt++){
-                        if(x + dir[a][b][0]*cnt < 0 || y + dir[a][b][1]*cnt < 0 || x + dir[a][b][0]*cnt > 14 || y + dir[a][b][1]*cnt > 14){
-                            block++;
-                            break;
-                        }
-                        if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == GameMap[x][y]){    //连子
-                            line++;
-                        }
-                        else if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == Util.getOpponent(GameMap[x][y])){  //堵塞
-                            block++;
-                            break;
-                        }
-                        else{       //留空
-                            break;
-                        }
-                    }
-                }
-                if(GameMap[x][y] != currentRole)
-                    res -= Util.getScore(line, block);
-                else
-                    res += Util.getScore(line, block);
-            }
+        for(int i = 0; i < 15; i++){
+            res += Util.presetScore[Integer.parseInt(strRow[i].toString(), 3)];
+            res += Util.presetScore[Integer.parseInt(strCol[i].toString(), 3)];
         }
+        for(int i = 0; i < 29; i++){
+            res += Util.presetScore[Integer.parseInt(strBiasLeft[i].toString(), 3)];
+            res += Util.presetScore[Integer.parseInt(strBiasRight[i].toString(), 3)];
+        }
+        res = currentRole == 1? res:-res;
         return res;
     }
 
     //评估单个位置
-    private int evaluate(int x, int y, int role){
+    private int evaluate(int pos){
         int res = 0;
-        for(int a = 0; a < 4; a++){
-            short block = 0;            //被堵住的数量
-            short line = 1;             //连子数量
-            for(int b = 0; b < 2; b++){
-                for(int cnt = 1; cnt <= 4; cnt++){
-                    if(x + dir[a][b][0]*cnt < 0 || y + dir[a][b][1]*cnt < 0 || x + dir[a][b][0]*cnt > 14 || y + dir[a][b][1]*cnt > 14){
-                        block++;
-                        break;
-                    }
-                    if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == role){    //连子
-                        line++;
-                    }
-                    else if(GameMap[x + dir[a][b][0]*cnt][y + dir[a][b][1]*cnt] == Util.getOpponent(role)){  //堵塞
-                        block++;
-                        break;
-                    }
-                    else{       //留空
-                        break;
-                    }
-                }
-            }
-            res += Util.getScore(line, block);
-        }
+        int row = Util.getRow(pos), col = Util.getCol(pos);
+        int lbindex = Util.preBiasLeftIndex[pos], rbindex = Util.preBiasRightIndex[pos];
+
+        strRow[row].setCharAt(col, (char) ('0' + currentRole));
+        strCol[col].setCharAt(row, (char) ('0' + currentRole));
+        strBiasLeft[lbindex].setCharAt(Util.preBiasLeftPos[pos], (char) ('0' + currentRole));
+        strBiasRight[rbindex].setCharAt(Util.preBiasRightPos[pos], (char) ('0' + currentRole));
+
+        res += Util.presetScore[Integer.parseInt(strRow[row].toString(), 3)];
+        res += Util.presetScore[Integer.parseInt(strCol[col].toString(), 3)];
+        res += Util.presetScore[Integer.parseInt(strBiasLeft[lbindex].toString(), 3)];
+        res += Util.presetScore[Integer.parseInt(strBiasRight[rbindex].toString(), 3)];
+
+        strRow[row].setCharAt(col, '0');
+        strCol[col].setCharAt(row, '0');
+        strBiasLeft[lbindex].setCharAt(Util.preBiasLeftPos[pos], '0');
+        strBiasRight[rbindex].setCharAt(Util.preBiasRightPos[pos], '0');
         return res;
     }
 
     //生成可下子位置
     private List<Movement> generate(){
         List<Movement> moveLists = new ArrayList<>();
-        boolean visit[][] = new boolean[15][15];
 
         for(int i = 0; i < hasChessCnt; i++){
-            Movement p = hasChess.get(i);
-            int x = p.getX(), y = p.getY();
-            for(int a = 0; a < 4; a++){
-                for(int b = 0; b < 2; b++){
-                    for(int cnt = 1; cnt <= 2; cnt++){
-                        int x1 = x + dir[a][b][0]*cnt;
-                        int y1 = y + dir[a][b][1]*cnt;
-                        if(x1 < 0 || y1 < 0 || x1 > 14 || y1 > 14)
-                            break;
-    
-                        if(GameMap[x1][y1] == 0 && !visit[x1][y1]){
-                            visit[x1][y1] = true;
-                            Movement move = new Movement(evaluate(x1, y1, currentRole) - evaluate(x1, y1, Util.getOpponent(currentRole)), x1, y1);
-                            moveLists.add(move);
-                        }
-                    }
-                }
+            int pos = hasChess.get(i).getPosition();
+            int row = Util.getRow(pos), col = Util.getCol(pos);
+
+            // 水平方向
+            for(int j = Util.preGenerate[col][bitRow[0][row]][0]; j < col; j++){
+                Movement move = new Movement(0, (row << 4) + j);
+                move.setScore(evaluate((row << 4) + j));
+                moveLists.add(move);
+            }
+            for(int j = col + 1; j <= Util.preGenerate[col][bitRow[0][row]][1]; j++){
+                Movement move = new Movement(0, (row << 4) + j);
+                move.setScore(evaluate((row << 4) + j));
+                moveLists.add(move);
+            }
+            // 竖直方向
+            for(int j = Util.preGenerate[row][bitCol[0][col]][0]; j < row; j++){
+                Movement move = new Movement(0, (j << 4) + col);
+                move.setScore(evaluate((j << 4) + col));
+                moveLists.add(move);
+            }
+            for(int j = row + 1; j <= Util.preGenerate[row][bitCol[0][col]][1]; j++){
+                Movement move = new Movement(0, (j << 4) + col);
+                move.setScore(evaluate((j << 4) + col));
+                moveLists.add(move);
+            }
+            // 左斜
+            int blindex = Util.preBiasLeftIndex[pos];
+            int l = Util.preGenerate[Util.preBiasLeftPos[pos]][bitBiasLeft[0][blindex]][0];
+            int r = Util.preGenerate[Util.preBiasLeftPos[pos]][bitBiasLeft[0][blindex]][1];
+            for(int j = l; j < Util.preBiasLeftPos[pos]; j++){
+                Movement move = new Movement(0, Util.biasLeftToPos[blindex][j]);
+                move.setScore(evaluate(Util.biasLeftToPos[blindex][j]));
+                moveLists.add(move);
+            }
+            for(int j = Util.preBiasLeftPos[pos] + 1; j <= r && j <= (blindex>14?28-blindex:blindex); j++){
+                Movement move = new Movement(0, Util.biasLeftToPos[blindex][j]);
+                move.setScore(evaluate(Util.biasLeftToPos[blindex][j]));
+                moveLists.add(move);
+            }
+            // 右斜
+            int brindex = Util.preBiasRightIndex[pos];
+            l = Util.preGenerate[Util.preBiasRightPos[pos]][bitBiasRight[0][brindex]][0];
+            r = Util.preGenerate[Util.preBiasRightPos[pos]][bitBiasRight[0][brindex]][1];
+            for(int j = l; j < Util.preBiasRightPos[pos]; j++){
+                Movement move = new Movement(0, Util.biasRightToPos[brindex][j]);
+                if(move.getPosition() == 249)
+                    move.setScore(1);
+                move.setScore(evaluate(Util.biasRightToPos[brindex][j]));
+                moveLists.add(move);
+            }
+            for(int j = Util.preBiasRightPos[pos] + 1; j <= r && j <= (brindex>14?28-brindex:brindex); j++){
+                Movement move = new Movement(0, Util.biasRightToPos[brindex][j]);
+                if(move.getPosition() == 249)
+                    move.setScore(1);
+                move.setScore(evaluate(Util.biasRightToPos[brindex][j]));
+                moveLists.add(move);
             }
         }
         return moveLists;
     }
 
-    private boolean makeMove(int x, int y){
+    private boolean makeMove(int pos){
+        int row = Util.getRow(pos), col = Util.getCol(pos);
+        int lbindex = Util.preBiasLeftIndex[pos], rbindex = Util.preBiasRightIndex[pos];
         step++;
-        GameMap[x][y] = currentRole;
+        GameMap[pos] = currentRole;
+        // 更新位行位列位斜
+        bitRow[currentRole][row] |= (1 << col);
+        bitCol[currentRole][col] |= (1 << row);
+        bitBiasLeft[currentRole][lbindex] |= (1 << Util.preBiasLeftPos[pos]);
+        bitBiasRight[currentRole][rbindex] |= (1 << Util.preBiasRightPos[pos]);
+        bitRow[0][row] = bitRow[1][row] | bitRow[2][row];
+        bitCol[0][col] = bitCol[1][col] | bitCol[2][col];
+        bitBiasLeft[0][lbindex] = bitBiasLeft[1][lbindex] | bitBiasLeft[2][lbindex];
+        bitBiasRight[0][rbindex] = bitBiasRight[1][rbindex] | bitBiasRight[2][rbindex];
+        // 更新棋盘详细信息
+        strRow[row].setCharAt(col, (char) ('0' + currentRole));
+        strCol[col].setCharAt(row, (char) ('0' + currentRole));
+        strBiasLeft[lbindex].setCharAt(Util.preBiasLeftPos[pos], (char) ('0' + currentRole));
+        strBiasRight[rbindex].setCharAt(Util.preBiasRightPos[pos], (char) ('0' + currentRole));
+
         hasChessCnt++;
-        hasChess.add(new Movement(0, x, y));
-        hashTable.update(x, y, currentRole);
+        hasChess.add(new Movement(0, pos));
+        hashTable.update(pos, currentRole);
 
         currentRole = currentRole == 1? 2:1;
-        return isWin(x, y);
+        return isWin(pos, GameMap[pos]);
     }
 
-    private void unMakeMove(int x, int y){
+    private void unMakeMove(int pos){
+        int row = Util.getRow(pos), col = Util.getCol(pos);
+        int lbindex = Util.preBiasLeftIndex[pos], rbindex = Util.preBiasRightIndex[pos];
+        int role = GameMap[pos];
         step--;
-        GameMap[x][y] = 0;
+        GameMap[pos] = 0;
+        // 更新位行位列位斜
+        bitRow[role][row] &= ~(1 << col);
+        bitCol[role][col] &= ~(1 << row);
+        bitBiasLeft[role][lbindex] &= ~(1 << Util.preBiasLeftPos[pos]);
+        bitBiasRight[role][rbindex] &= ~(1 << Util.preBiasRightPos[pos]);
+        bitRow[0][row] = bitRow[1][row] | bitRow[2][row];
+        bitCol[0][col] = bitCol[1][col] | bitCol[2][col];
+        bitBiasLeft[0][lbindex] = bitBiasLeft[1][lbindex] | bitBiasLeft[2][lbindex];
+        bitBiasRight[0][rbindex] = bitBiasRight[1][rbindex] | bitBiasRight[2][rbindex];
+        // 更新棋盘详细信息
+        strRow[row].setCharAt(col, '0');
+        strCol[col].setCharAt(row, '0');
+        strBiasLeft[lbindex].setCharAt(Util.preBiasLeftPos[pos], '0');
+        strBiasRight[rbindex].setCharAt(Util.preBiasRightPos[pos], '0');
+
         hasChess.remove(hasChessCnt - 1);
         hasChessCnt--;
-        hashTable.update(x, y, currentRole);
+        hashTable.update(pos, currentRole);
 
         currentRole = currentRole == 1? 2:1;
     }
@@ -210,7 +270,7 @@ public class Game {
         int score = 0;
         int best;
         Movement move = NONE_MOVE.clone(), gooMove = NONE_MOVE.clone();
-        List<Movement> moveLists = new ArrayList<>();
+        List<Movement> moveLists;
 
         score = hashTable.readHashTable(depth, step, alpha, beta, move);
         if(score != NONE_SCORE){
@@ -227,24 +287,24 @@ public class Game {
             return score;
         }
 
-        if(!move.equals(NONE_MOVE) && GameMap[move.getX()][move.getY()] == 0) {
+        moveLists = generate();
+        if(!move.equals(NONE_MOVE) && GameMap[move.getPosition()] == 0) {
             Movement temp = move.clone();
             temp.setScore(MAX_SCORE);
             moveLists.add(temp);
         }
-        moveLists.addAll(generate());
         Collections.sort(moveLists);
         int moveNum = moveLists.size();
 
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
-            if(makeMove(move.getX(), move.getY())){
+            if(makeMove(move.getPosition())){
                 score = MAX_SCORE - step;
             }
             else{
                 score = -alphaBetaSearch(depth - 1, -beta, -alpha);
             }
-            unMakeMove(move.getX(), move.getY());
+            unMakeMove(move.getPosition());
 
             if(score >= beta){
                 hashTable.saveHashTable(depth, step, beta, HashTable.hashBeta, move);

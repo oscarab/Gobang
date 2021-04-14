@@ -12,8 +12,8 @@ public class HashTable {
     public static final int hashBeta = 2;
     public static final int hashExact = 3;
 
-    private long[][][] zobristTable = new long[3][15][15];
-    private long[][][] zobristCheckTable = new long[3][15][15];
+    private long[][] zobristTable = new long[3][256];
+    private long[][] zobristCheckTable = new long[3][256];
     private long key;
     private long checkKey;
     private long playKey;
@@ -27,11 +27,9 @@ public class HashTable {
         playKey = random.nextLong();
         playCheckKey = random.nextLong();
         for(int k = 1; k <= 2; k++){
-            for(int i = 0; i < 15;i++){
-                for(int j = 0; j < 15; j++){
-                    zobristTable[k][i][j] = random.nextLong();
-                    zobristCheckTable[k][i][j] = random.nextLong();
-                }
+            for(int i = 0; i < 256;i++){
+                zobristTable[k][i] = random.nextLong();
+                zobristCheckTable[k][i] = random.nextLong();
             }
         }
     }
@@ -40,10 +38,10 @@ public class HashTable {
         hashtable = new Zobrist[TABLE_SIZE];
     }
 
-    public void update(int x, int y, int role){
-        key ^= zobristTable[role][x][y];
+    public void update(int pos, int role){
+        key ^= zobristTable[role][pos];
         key ^= playKey;
-        checkKey ^= zobristCheckTable[role][x][y];
+        checkKey ^= zobristCheckTable[role][pos];
         checkKey ^= playCheckKey;
     }
 
@@ -59,24 +57,26 @@ public class HashTable {
         int index = (int) (key & TABLE_SIZE_MASK);
         Zobrist node = hashtable[index];
         
-        if(node != null && node.getCheckKey() == checkKey && node.getDepth() >= depth){
-            // 调整至相对值
-            int score = node.getScore();
-            if(score > Game.WIN_SCORE){
-                score -= step;
-            }
-            if(score < -Game.WIN_SCORE){
-                score += step;
-            }
-            // PV结点
-            if(node.getType() == hashExact){
-                return score;
-            }
-            else if(node.getType() == hashAlpha && score <= alpha){
-                return alpha;
-            }
-            else if(node.getType() == hashBeta && score >= beta){
-                return beta;
+        if(node != null && node.getCheckKey() == checkKey){
+            if(node.getDepth() >= depth){
+                // 调整至相对值
+                int score = node.getScore();
+                if(score > Game.WIN_SCORE){
+                    score -= step;
+                }
+                if(score < -Game.WIN_SCORE){
+                    score += step;
+                }
+                // PV结点
+                if(node.getType() == hashExact){
+                    return score;
+                }
+                else if(node.getType() == hashAlpha && score <= alpha){
+                    return alpha;
+                }
+                else if(node.getType() == hashBeta && score >= beta){
+                    return beta;
+                }
             }
             move.set(node.getGoodMove());
         }
@@ -105,7 +105,7 @@ public class HashTable {
         // 出现相同局面冲突
         if(node != null && node.getCheckKey() == checkKey){
             // 深度优先覆盖
-            if(node.getDepth() < depth){
+            if(node.getDepth() <= depth){
                 hashtable[index] = new_node;
             }
         }
