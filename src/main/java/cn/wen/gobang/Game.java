@@ -146,6 +146,7 @@ public class Game {
     //生成可下子位置
     private List<Movement> generate(){
         List<Movement> moveLists = new ArrayList<>();
+        boolean visit[] = new boolean[256];
 
         for(int i = 0; i < hasChessCnt; i++){
             int pos = hasChess.get(i).getPosition();
@@ -153,57 +154,81 @@ public class Game {
 
             // 水平方向
             for(int j = Util.preGenerate[col][bitRow[0][row]][0]; j < col; j++){
-                Movement move = new Movement(0, (row << 4) + j);
-                move.setScore(evaluate((row << 4) + j));
-                moveLists.add(move);
+                if(!visit[(row << 4) + j]){
+                    Movement move = new Movement(0, (row << 4) + j);
+                    move.setScore(evaluate((row << 4) + j));
+                    moveLists.add(move);
+                    visit[(row << 4) + j] = true;
+                }
             }
             for(int j = col + 1; j <= Util.preGenerate[col][bitRow[0][row]][1]; j++){
-                Movement move = new Movement(0, (row << 4) + j);
-                move.setScore(evaluate((row << 4) + j));
-                moveLists.add(move);
+                if(!visit[(row << 4) + j]){
+                    Movement move = new Movement(0, (row << 4) + j);
+                    move.setScore(evaluate((row << 4) + j));
+                    moveLists.add(move);
+                    visit[(row << 4) + j] = true;                    
+                }
             }
             // 竖直方向
             for(int j = Util.preGenerate[row][bitCol[0][col]][0]; j < row; j++){
-                Movement move = new Movement(0, (j << 4) + col);
-                move.setScore(evaluate((j << 4) + col));
-                moveLists.add(move);
+                if(!visit[(j << 4) + col]){
+                    Movement move = new Movement(0, (j << 4) + col);
+                    move.setScore(evaluate((j << 4) + col));
+                    moveLists.add(move);
+                    visit[(j << 4) + col] = true;
+                }
             }
             for(int j = row + 1; j <= Util.preGenerate[row][bitCol[0][col]][1]; j++){
-                Movement move = new Movement(0, (j << 4) + col);
-                move.setScore(evaluate((j << 4) + col));
-                moveLists.add(move);
+                if(!visit[(j << 4) + col]){
+                    Movement move = new Movement(0, (j << 4) + col);
+                    move.setScore(evaluate((j << 4) + col));
+                    moveLists.add(move);
+                    visit[(j << 4) + col] = true;
+                }
             }
             // 左斜
             int blindex = Util.preBiasLeftIndex[pos];
             int l = Util.preGenerate[Util.preBiasLeftPos[pos]][bitBiasLeft[0][blindex]][0];
             int r = Util.preGenerate[Util.preBiasLeftPos[pos]][bitBiasLeft[0][blindex]][1];
             for(int j = l; j < Util.preBiasLeftPos[pos]; j++){
-                Movement move = new Movement(0, Util.biasLeftToPos[blindex][j]);
-                move.setScore(evaluate(Util.biasLeftToPos[blindex][j]));
-                moveLists.add(move);
+                int mpos = Util.biasLeftToPos[blindex][j];
+                if(!visit[mpos]){
+                    Movement move = new Movement(0, mpos);
+                    move.setScore(evaluate(mpos));
+                    moveLists.add(move);
+                    visit[mpos] = true;
+                }
             }
             for(int j = Util.preBiasLeftPos[pos] + 1; j <= r && j <= (blindex>14?28-blindex:blindex); j++){
-                Movement move = new Movement(0, Util.biasLeftToPos[blindex][j]);
-                move.setScore(evaluate(Util.biasLeftToPos[blindex][j]));
-                moveLists.add(move);
+                int mpos = Util.biasLeftToPos[blindex][j];
+                if(!visit[mpos]){
+                    Movement move = new Movement(0, mpos);
+                    move.setScore(evaluate(mpos));
+                    moveLists.add(move);
+                    visit[mpos] = true;
+                }
             }
             // 右斜
             int brindex = Util.preBiasRightIndex[pos];
             l = Util.preGenerate[Util.preBiasRightPos[pos]][bitBiasRight[0][brindex]][0];
             r = Util.preGenerate[Util.preBiasRightPos[pos]][bitBiasRight[0][brindex]][1];
             for(int j = l; j < Util.preBiasRightPos[pos]; j++){
-                Movement move = new Movement(0, Util.biasRightToPos[brindex][j]);
-                if(move.getPosition() == 249)
-                    move.setScore(1);
-                move.setScore(evaluate(Util.biasRightToPos[brindex][j]));
-                moveLists.add(move);
+                int mpos = Util.biasRightToPos[brindex][j];
+                if(!visit[mpos]){
+                    Movement move = new Movement(0, mpos);
+                    move.setScore(evaluate(mpos));
+                    moveLists.add(move);
+                    visit[mpos] = true;
+                }
             }
             for(int j = Util.preBiasRightPos[pos] + 1; j <= r && j <= (brindex>14?28-brindex:brindex); j++){
-                Movement move = new Movement(0, Util.biasRightToPos[brindex][j]);
-                if(move.getPosition() == 249)
-                    move.setScore(1);
-                move.setScore(evaluate(Util.biasRightToPos[brindex][j]));
-                moveLists.add(move);
+                int mpos = Util.biasRightToPos[brindex][j];
+                if(!visit[mpos]){
+                    Movement move = new Movement(0, mpos);
+                    move.setScore(evaluate(mpos));
+                    moveLists.add(move);
+                    visit[mpos] = true;
+                }
             }
         }
         return moveLists;
