@@ -14,6 +14,8 @@ public class Util {
 
     public static int presetScore[] = new int[14348907];
 
+    public static int presetPow[][] = new int[15][3];
+
     public static void initPreset(){
         // 生成着法预置数组
         for(int i = 0; i < 15; i++){
@@ -93,10 +95,18 @@ public class Util {
             }
         }
 
+        // 预置次幂
+        for(int i = 0; i < 15; i++){
+            for(int j = 0; j < 3; j++){
+                presetPow[i][j] = (int) Math.pow(3, i);
+                presetPow[i][j] *= j;
+            }
+        }
+
         long start = System.currentTimeMillis();
         ACautomata acauto = new ACautomata();
         for(int i = 0; i <= 14348906; i++){
-            presetScore[i] = acauto.matchScore(Integer.toString(i, 3), 15);
+            presetScore[i] = acauto.matchScore(new StringBuilder(Integer.toString(i, 3)).reverse().toString(), 15);
         }
         System.out.println(System.currentTimeMillis() - start);
     }
