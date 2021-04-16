@@ -343,7 +343,7 @@ public class Game {
         int moveNum = moveLists.size();
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
-            if(move.getScore() < 1000) break;
+            if(move.getScore() < 1200) break;
             
             if(makeMove(move.getPosition())){
                 score = MAX_SCORE - step;
