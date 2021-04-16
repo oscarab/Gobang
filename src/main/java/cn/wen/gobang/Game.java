@@ -84,7 +84,7 @@ public class Game {
         hashTable.clear();
         long start = System.currentTimeMillis();
 
-        for(maxDepth = 1; maxDepth <= 5; maxDepth++){
+        for(maxDepth = 1; maxDepth <= 6; maxDepth++){
             score = alphaBetaSearch(maxDepth, NONE_SCORE, -NONE_SCORE);
             System.out.println((System.currentTimeMillis() - start) + "ms");
             if(score > WIN_SCORE) break;
@@ -115,19 +115,36 @@ public class Game {
 
     //评估单个位置
     private int evaluate(int pos){
-        int res = 0;
+        int resBlack = 0, resWhite = 0, baseValue = 0;
         int row = Util.getRow(pos), col = Util.getCol(pos);
         int lbindex = Util.preBiasLeftIndex[pos], rbindex = Util.preBiasRightIndex[pos];
 
-        makePartMove(pos, row, col, lbindex, rbindex);
-        res += rowScore[row];
-        res += colScore[col];
-        res += biasLeftScore[lbindex];
-        res += biasRightScore[rbindex];
-        unMakePartMove(pos, row, col, lbindex, rbindex);
+        baseValue += rowScore[row];
+        baseValue += colScore[col];
+        baseValue += biasLeftScore[lbindex];
+        baseValue += biasRightScore[rbindex];
 
-        res = currentRole == 1? res:-res;
-        return res;
+        makePartMove(1, pos, row, col, lbindex, rbindex);
+        updateScore(row, col, lbindex, rbindex);
+        resBlack += rowScore[row];
+        resBlack += colScore[col];
+        resBlack += biasLeftScore[lbindex];
+        resBlack += biasRightScore[rbindex];
+        unMakePartMove(pos, row, col, lbindex, rbindex);
+        updateScore(row, col, lbindex, rbindex);
+        resBlack -= baseValue;
+
+        makePartMove(2, pos, row, col, lbindex, rbindex);
+        updateScore(row, col, lbindex, rbindex);
+        resWhite -= rowScore[row];
+        resWhite -= colScore[col];
+        resWhite -= biasLeftScore[lbindex];
+        resWhite -= biasRightScore[rbindex];
+        unMakePartMove(pos, row, col, lbindex, rbindex);
+        updateScore(row, col, lbindex, rbindex);
+        resWhite += baseValue;
+
+        return resBlack + resWhite;
     }
 
     //生成可下子位置
@@ -235,7 +252,7 @@ public class Game {
         bitBiasLeft[0][lbindex] = bitBiasLeft[1][lbindex] | bitBiasLeft[2][lbindex];
         bitBiasRight[0][rbindex] = bitBiasRight[1][rbindex] | bitBiasRight[2][rbindex];
         // 更新棋盘详细信息
-        makePartMove(pos, row, col, lbindex, rbindex);
+        makePartMove(currentRole, pos, row, col, lbindex, rbindex);
         // 更新分数
         updateScore(row, col, lbindex, rbindex);
 
@@ -273,12 +290,12 @@ public class Game {
         currentRole = currentRole == 1? 2:1;
     }
 
-    private void makePartMove(int pos, int row, int col, int lbindex, int rbindex){
-        strRow[row] += Util.presetPow[col][currentRole];
-        strCol[col] += Util.presetPow[row][currentRole];
-        strBiasLeft[lbindex] += Util.presetPow[Util.preBiasLeftPos[pos]][currentRole];
-        strBiasRight[rbindex] += Util.presetPow[Util.preBiasRightPos[pos]][currentRole];
-        GameMap[pos] = currentRole;
+    private void makePartMove(int role, int pos, int row, int col, int lbindex, int rbindex){
+        strRow[row] += Util.presetPow[col][role];
+        strCol[col] += Util.presetPow[row][role];
+        strBiasLeft[lbindex] += Util.presetPow[Util.preBiasLeftPos[pos]][role];
+        strBiasRight[rbindex] += Util.presetPow[Util.preBiasRightPos[pos]][role];
+        GameMap[pos] = role;
     }
     private void unMakePartMove(int pos, int row, int col, int lbindex, int rbindex){
         strRow[row] -= Util.presetPow[col][GameMap[pos]];
@@ -303,6 +320,51 @@ public class Game {
         biasRightScore[rbindex] = newRightScore;
     }
 
+    private int quiescentSearch(int depth, int alpha, int beta){
+        int score = 0, best = 0;
+        Movement move;
+        List<Movement> moveLists;
+
+        best = step - MAX_SCORE;
+        if(best > beta){
+            return beta;
+        }
+
+        score = evaluate();
+        if(score > beta)
+            return beta;
+        if(score > alpha)
+            alpha = score;
+        if(depth <= 0)
+            return alpha;
+
+        moveLists = generate();
+        Collections.sort(moveLists);
+        int moveNum = moveLists.size();
+        for(int i = 0; i < moveNum; i++){
+            move = moveLists.get(i);
+            if(move.getScore() < 1000) break;
+            
+            if(makeMove(move.getPosition())){
+                score = MAX_SCORE - step;
+            }
+            else{
+                score = -quiescentSearch(depth - 1, -beta, -alpha);
+            }
+            unMakeMove(move.getPosition());
+            if(score >= beta){
+                return beta;
+            }
+            if(score > best){
+                best = score;
+                if(score > alpha){
+                    alpha = score;
+                }
+            }
+        }
+        return alpha;
+    }
+
     int hashhit = 0;
     int all_node = 0;
     int all_beta = 0;
@@ -322,8 +384,7 @@ public class Game {
         boolean isAlpha = true;
 
         if(depth <= 0){
-            score = evaluate();
-            hashTable.saveHashTable(depth, step, score, HashTable.hashExact, NONE_MOVE);
+            score = quiescentSearch(4, alpha, beta);
             return score;
         }
 
@@ -339,6 +400,8 @@ public class Game {
 
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
+            if(move.getScore() < 100) break;
+
             if(makeMove(move.getPosition())){
                 score = MAX_SCORE - step;
             }
