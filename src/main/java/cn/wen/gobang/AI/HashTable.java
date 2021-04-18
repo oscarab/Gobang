@@ -53,7 +53,7 @@ public class HashTable {
      * @param move
      * @return
      */
-    public int readHashTable(int depth, int step, int alpha, int beta, Movement move){
+    public int readHashTable(int depth, int step, int alpha, int beta){
         int index = (int) (key & TABLE_SIZE_MASK);
         Zobrist node = hashtable[index];
         
@@ -78,7 +78,6 @@ public class HashTable {
                     return beta;
                 }
             }
-            move.set(node.getGoodMove());
         }
         return Game.NONE_SCORE;
     }
@@ -90,10 +89,10 @@ public class HashTable {
      * @param type
      * @param move
      */
-    public void saveHashTable(int depth, int step, int score, int type, Movement move){
+    public void saveHashTable(int depth, int step, int score, int type){
         int index = (int) (key & TABLE_SIZE_MASK);
         Zobrist node = hashtable[index];
-        Zobrist new_node =  new Zobrist(checkKey, score, depth, type, move);
+        Zobrist new_node =  new Zobrist(checkKey, score, depth, type);
 
         // 存入置换表前，将估值调整到绝对值
         if(score > Game.WIN_SCORE){

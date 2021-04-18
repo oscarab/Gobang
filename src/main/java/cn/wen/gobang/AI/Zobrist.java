@@ -5,14 +5,12 @@ public class Zobrist {
     private int score;
     private int depth;
     private int type;
-    private Movement goodMove;
     
-    public Zobrist(long checkKey, int score, int depth, int type, Movement goodMove) {
+    public Zobrist(long checkKey, int score, int depth, int type) {
         this.checkKey = checkKey;
         this.score = score;
         this.depth = depth;
         this.type = type;
-        this.goodMove = goodMove;
     }
     public long getCheckKey() {
         return checkKey;
@@ -37,11 +35,5 @@ public class Zobrist {
     }
     public void setType(int type) {
         this.type = type;
-    }
-    public Movement getGoodMove() {
-        return goodMove;
-    }
-    public void setGoodMove(Movement goodMove) {
-        this.goodMove = goodMove;
     }
 }

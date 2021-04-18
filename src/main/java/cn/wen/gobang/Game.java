@@ -31,8 +31,8 @@ public class Game {
     private int[] biasRightScore = new int[30];
     private int currentScore;
 
-    private List<Movement> hasChess = new ArrayList<Movement>();
-    private int hasChessCnt = 0;
+    private List<Movement> movesArray = new ArrayList<Movement>(100);
+    private int chessCount = 0;
     private Movement bestMove;
 
     private HashTable hashTable;
@@ -43,6 +43,10 @@ public class Game {
     public static final int WIN_SCORE = MAX_SCORE - 24;
     private int step;
     private int maxDepth = 4;
+
+    private long maxTime = 20000;
+    private long startTime = 0;
+    private boolean isLimited = false;
 
     public Game(int difficulty){
         this.maxDepth = difficulty;
@@ -70,9 +74,20 @@ public class Game {
         return gameOut[x][y];
     }
 
-    public boolean directMove(int x, int y){
-        gameOut[x][y] = currentRole;
-        return makeMove((y << 4) + x);
+    public boolean directMove(int pos){
+        gameOut[Util.getCol(pos)][Util.getRow(pos)] = currentRole;
+        return makeMove(pos);
+    }
+
+    public void regret(){
+        if(chessCount < 2) return;
+        int pos = movesArray.get(chessCount - 1).getPosition();
+        gameOut[Util.getCol(pos)][Util.getRow(pos)] = 0;
+        unMakeMove(pos);
+
+        pos = movesArray.get(chessCount - 1).getPosition();
+        gameOut[Util.getCol(pos)][Util.getRow(pos)] = 0;
+        unMakeMove(pos);
     }
 
     public boolean AIthink(){
@@ -81,14 +96,19 @@ public class Game {
         hashhit = 0;
         all_beta = 0;
         all_node = 0;
+        isLimited = false;
         hashTable.clear();
-        long start = System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
+        Movement bestMoveSave = NONE_MOVE;
 
         for(maxDepth = 1; maxDepth <= 6; maxDepth++){
             score = alphaBetaSearch(maxDepth, NONE_SCORE, -NONE_SCORE);
-            System.out.println((System.currentTimeMillis() - start) + "ms");
+            System.out.println((System.currentTimeMillis() - startTime) + "ms");
+            if(isLimited) break;
+            else bestMoveSave = bestMove;
             if(score > WIN_SCORE) break;
         }
+        bestMove = bestMoveSave;
         System.out.println("best score:" + score);
         System.out.println("node:" + all_node);
         System.out.println("beta:" + all_beta);
@@ -96,7 +116,7 @@ public class Game {
 
         System.out.println(hashhit);
         
-        return makeMove(bestMove.getPosition());
+        return makeMove(bestMoveSave.getPosition());
     }
 
     private boolean isWin(int pos, int role){
@@ -152,8 +172,8 @@ public class Game {
         List<Movement> moveLists = new ArrayList<>();
         boolean visit[] = new boolean[256];
 
-        for(int i = 0; i < hasChessCnt; i++){
-            int pos = hasChess.get(i).getPosition();
+        for(int i = 0; i < chessCount; i++){
+            int pos = movesArray.get(i).getPosition();
             int row = Util.getRow(pos), col = Util.getCol(pos);
 
             // 水平方向
@@ -256,8 +276,8 @@ public class Game {
         // 更新分数
         updateScore(row, col, lbindex, rbindex);
 
-        hasChessCnt++;
-        hasChess.add(new Movement(0, pos));
+        chessCount++;
+        movesArray.add(new Movement(0, pos));
         hashTable.update(pos, currentRole);
 
         currentRole = currentRole == 1? 2:1;
@@ -283,8 +303,8 @@ public class Game {
         // 更新分数
         updateScore(row, col, lbindex, rbindex);
 
-        hasChess.remove(hasChessCnt - 1);
-        hasChessCnt--;
+        movesArray.remove(chessCount - 1);
+        chessCount--;
         hashTable.update(pos, currentRole);
 
         currentRole = currentRole == 1? 2:1;
@@ -371,10 +391,15 @@ public class Game {
     private int alphaBetaSearch(int depth, int alpha, int beta){
         int score = 0;
         int best;
-        Movement move = NONE_MOVE.clone(), gooMove = NONE_MOVE.clone();
+        Movement move = NONE_MOVE.clone();
         List<Movement> moveLists;
 
-        score = hashTable.readHashTable(depth, step, alpha, beta, move);
+        if(isLimited || System.currentTimeMillis() - startTime > maxTime){
+            isLimited = true;
+            return NONE_SCORE;
+        }
+
+        score = hashTable.readHashTable(depth, step, alpha, beta);
         if(score != NONE_SCORE){
             hashhit++;
             return score;
@@ -389,11 +414,6 @@ public class Game {
         }
 
         moveLists = generate();
-        // if(!move.equals(NONE_MOVE) && GameMap[move.getPosition()] == 0) {
-        //     Movement temp = move.clone();
-        //     temp.setScore(MAX_SCORE);
-        //     moveLists.add(temp);
-        // }
         Collections.sort(moveLists);
         int moveNum = moveLists.size();
         all_node += moveNum;
@@ -412,12 +432,11 @@ public class Game {
 
             if(score >= beta){
                 all_beta++;
-                hashTable.saveHashTable(depth, step, beta, HashTable.hashBeta, move);
+                hashTable.saveHashTable(depth, step, beta, HashTable.hashBeta);
                 return beta;
             }
             if(score > best){
                 best = score;
-                gooMove = move;
                 if(score > alpha){
                     isAlpha = false;
                     alpha = score;
@@ -429,10 +448,10 @@ public class Game {
         }
 
         if(isAlpha){
-            hashTable.saveHashTable(depth, step, alpha, HashTable.hashAlpha, gooMove);
+            hashTable.saveHashTable(depth, step, alpha, HashTable.hashAlpha);
         }
         else{
-            hashTable.saveHashTable(depth, step, best, HashTable.hashExact, gooMove);
+            hashTable.saveHashTable(depth, step, best, HashTable.hashExact);
         }
         return alpha;
     }

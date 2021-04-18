@@ -1,4 +1,4 @@
-package cn.wen.gobang;
+package cn.wen.gobang.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -11,8 +11,9 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
+
+import cn.wen.gobang.App;
 
 public class GameGUI extends JFrame{
     private static final long serialVersionUID = 1L;
@@ -31,7 +32,7 @@ public class GameGUI extends JFrame{
 		start.setFont(new Font("Dialog ", 1, 25));
 		start.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				App.game1.close();
+				close();
 				App.game2.open();
 			}
 		});
@@ -40,13 +41,6 @@ public class GameGUI extends JFrame{
 
 		JButton setting = new JButton("选        项");
 		setting.setFont(new Font("Dialog ", 1, 25));
-		setting.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e) {
-				String[] options = { "简单", "普通" };
-				int choose = JOptionPane.showOptionDialog(null, "请选择难度：", "难度选择", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
-				App.game2.setDifficulty(choose == 1?6:4);
-			}
-		});
 		box.add(Box.createVerticalStrut(20));
 		box.add(setting);
 
