@@ -25,11 +25,12 @@ public class Game {
     private int[] strBiasRight = new int[30];
     private int currentRole = 1;                    // 当前执子的颜色 1黑2白
 
+    // 行、列、斜线的所有评估分数
     private int[] rowScore = new int[15];
     private int[] colScore = new int[15];
     private int[] biasLeftScore = new int[30];
     private int[] biasRightScore = new int[30];
-    private int currentScore;
+    private int currentScore;                       // 当前方的局势评估分
 
     private List<Movement> movesArray = new ArrayList<Movement>(100);
     private int chessCount = 0;
@@ -42,14 +43,13 @@ public class Game {
     public static final int MAX_SCORE = 1000000000;
     public static final int WIN_SCORE = MAX_SCORE - 24;
     private int step;
-    private int maxDepth = 4;
+    private int maxDepth = 6;
 
     private long maxTime = 20000;
     private long startTime = 0;
     private boolean isLimited = false;
 
-    public Game(int difficulty){
-        this.maxDepth = difficulty;
+    public Game(){
         hashTable = new HashTable();
 
         for(int role = 0; role < 3; role++){
@@ -62,10 +62,6 @@ public class Game {
         }
     }
 
-    public void setMaxStep(int val){
-        maxDepth = val;
-    }
-
     public Movement getLastMove(){
         return bestMove;
     }
@@ -74,11 +70,19 @@ public class Game {
         return gameOut[x][y];
     }
 
+    /**
+     * 由当前方直接下一步棋子
+     * @param pos   下子位置
+     * @return  true 如果胜利
+     */
     public boolean directMove(int pos){
         gameOut[Util.getCol(pos)][Util.getRow(pos)] = currentRole;
         return makeMove(pos);
     }
 
+    /**
+     * 悔棋
+     */
     public void regret(){
         if(chessCount < 2) return;
         int pos = movesArray.get(chessCount - 1).getPosition();
@@ -90,6 +94,10 @@ public class Game {
         unMakeMove(pos);
     }
 
+    /**
+     * AI思考并下一步棋
+     * @return true 如果AI获得胜利
+     */
     public boolean AIthink(){
         int score = 0;
         step = 0;
@@ -119,6 +127,12 @@ public class Game {
         return makeMove(bestMoveSave.getPosition());
     }
 
+    /**
+     * 判断某一方是否胜利
+     * @param pos   判断位置
+     * @param role  黑或白方
+     * @return  true 如果胜利
+     */
     private boolean isWin(int pos, int role){
         int row = Util.getRow(pos), col = Util.getCol(pos);
         return Util.preWin[bitRow[role][row]] ||  Util.preWin[bitCol[role][col]]
@@ -126,24 +140,33 @@ public class Game {
                 || Util.preWin[bitBiasRight[role][Util.preBiasRightIndex[pos]]];
     }
 
-    //评估当前一方局势
+    /**
+     * 评估当前一方局势
+     * @return int 当前局势分数
+     */
     private int evaluate(){
         int res = currentScore;
         res = currentRole == 1? res:-res;
         return res;
     }
 
-    //评估单个位置
+    /**
+     * 评估单个位置，用于启发性搜索
+     * @param pos 评估的位置
+     * @return  int 评估的分数
+     */
     private int evaluate(int pos){
         int resBlack = 0, resWhite = 0, baseValue = 0;
         int row = Util.getRow(pos), col = Util.getCol(pos);
         int lbindex = Util.preBiasLeftIndex[pos], rbindex = Util.preBiasRightIndex[pos];
 
+        // 记录原始分数
         baseValue += rowScore[row];
         baseValue += colScore[col];
         baseValue += biasLeftScore[lbindex];
         baseValue += biasRightScore[rbindex];
 
+        // 下一步黑子，记录分数
         makePartMove(1, pos, row, col, lbindex, rbindex);
         updateScore(row, col, lbindex, rbindex);
         resBlack += rowScore[row];
@@ -154,6 +177,7 @@ public class Game {
         updateScore(row, col, lbindex, rbindex);
         resBlack -= baseValue;
 
+        // 下一步白子，记录分数
         makePartMove(2, pos, row, col, lbindex, rbindex);
         updateScore(row, col, lbindex, rbindex);
         resWhite -= rowScore[row];
@@ -164,10 +188,14 @@ public class Game {
         updateScore(row, col, lbindex, rbindex);
         resWhite += baseValue;
 
+        // 评估分数为 黑方获得优势 + 白方获得优势
         return resBlack + resWhite;
     }
 
-    //生成可下子位置
+    /**
+     * 生成可下子的位置
+     * @return List 下子位置
+     */
     private List<Movement> generate(){
         List<Movement> moveLists = new ArrayList<>();
         boolean visit[] = new boolean[256];
@@ -340,6 +368,13 @@ public class Game {
         biasRightScore[rbindex] = newRightScore;
     }
 
+    /**
+     * 静态搜索
+     * @param depth 限制深度
+     * @param alpha alpha值
+     * @param beta  beta值
+     * @return  int 评估分数
+     */
     private int quiescentSearch(int depth, int alpha, int beta){
         int score = 0, best = 0;
         Movement move;
@@ -391,9 +426,10 @@ public class Game {
     private int alphaBetaSearch(int depth, int alpha, int beta){
         int score = 0;
         int best;
-        Movement move = NONE_MOVE.clone();
+        Movement move;
         List<Movement> moveLists;
 
+        // 检查是否超时
         if(isLimited || System.currentTimeMillis() - startTime > maxTime){
             isLimited = true;
             return NONE_SCORE;
@@ -409,18 +445,20 @@ public class Game {
         boolean isAlpha = true;
 
         if(depth <= 0){
+            // 开始静态搜索
             score = quiescentSearch(4, alpha, beta);
             return score;
         }
 
-        moveLists = generate();
-        Collections.sort(moveLists);
+        moveLists = generate();             // 生成着法
+        Collections.sort(moveLists);        // 着法排序
         int moveNum = moveLists.size();
         all_node += moveNum;
 
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
-            if(move.getScore() < 100) break;
+            // 剪掉一些分数较低的着法
+            if(move.getScore() < 100) break;    
 
             if(makeMove(move.getPosition())){
                 score = MAX_SCORE - step;
