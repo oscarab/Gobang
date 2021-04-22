@@ -216,8 +216,8 @@ public class GameGUI extends JFrame{
 			if(isFirst){
 				game.directMove((7 << 4) + 7);
 				board.repaint();
-				updateInfo();
 				now = 0;
+				updateInfo();
 				return;
 			}
 			Thread aithread = new Thread() {
@@ -257,6 +257,12 @@ public class GameGUI extends JFrame{
 				line = new Line2D.Double(30, 30 + i, 590, 30 + i);
 				g2.draw(line);
 			}
+
+			drawCircle(Color.BLACK, (30 + 7 * 40), (30 + 7 * 40), 5, g2);
+			drawCircle(Color.BLACK, (30 + 3 * 40), (30 + 3 * 40), 5, g2);
+			drawCircle(Color.BLACK, (30 + 11 * 40), (30 + 11 * 40), 5, g2);
+			drawCircle(Color.BLACK, (30 + 3 * 40), (30 + 11 * 40), 5, g2);
+			drawCircle(Color.BLACK, (30 + 11 * 40), (30 + 3 * 40), 5, g2);
 
 			// 绘画棋子
 			for (int i = 0; i < 15; i++) {

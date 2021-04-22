@@ -286,6 +286,11 @@ public class Game {
         return moveLists;
     }
 
+    /**
+     * 下一步子
+     * @param pos   下子位置
+     * @return  true 如果胜利
+     */
     private boolean makeMove(int pos){
         int row = Util.getRow(pos), col = Util.getCol(pos);
         int lbindex = Util.preBiasLeftIndex[pos], rbindex = Util.preBiasRightIndex[pos];
@@ -312,6 +317,10 @@ public class Game {
         return isWin(pos, GameMap[pos]);
     }
 
+    /**
+     * 撤销一步子
+     * @param pos   撤销的位置
+     */
     private void unMakeMove(int pos){
         int row = Util.getRow(pos), col = Util.getCol(pos);
         int lbindex = Util.preBiasLeftIndex[pos], rbindex = Util.preBiasRightIndex[pos];
@@ -353,6 +362,13 @@ public class Game {
         GameMap[pos] = 0;
     }
 
+    /**
+     * 更新当前局势分数
+     * @param row       要更新的行
+     * @param col       要更新的列
+     * @param lbindex   要更新的左斜线
+     * @param rbindex   要更新的右斜线
+     */
     private void updateScore(int row, int col, int lbindex, int rbindex){
         int newRowScore = Util.presetScore[strRow[row]];
         currentScore += newRowScore - rowScore[row];
@@ -398,6 +414,7 @@ public class Game {
         int moveNum = moveLists.size();
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
+            // 只考虑高分位置，能成活三活四或堵对方活三的位置
             if(move.getScore() < 1200) break;
             
             if(makeMove(move.getPosition())){

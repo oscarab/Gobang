@@ -1,28 +1,75 @@
 package cn.wen.gobang.AI;
 
+import javax.swing.JFrame;
+import javax.swing.JProgressBar;
+
+import cn.wen.gobang.App;
+import cn.wen.gobang.gui.GameGUI;
+import cn.wen.gobang.gui.Menu;
+
 public class Util {
-    public static int preGenerate[][][] = new int[15][32768][2];
+    public static char preGenerate[][][] = new char[15][32768][2];
     public static boolean preWin[] = new boolean[32768];
 
-    public static int preBiasLeftIndex[] = new int[256];
-    public static int preBiasRightIndex[] = new int[256];
-    public static int preBiasLeftPos[] = new int[256];
-    public static int preBiasRightPos[] = new int[256];
+    public static char preBiasLeftIndex[] = new char[256];
+    public static char preBiasRightIndex[] = new char[256];
+    public static char preBiasLeftPos[] = new char[256];
+    public static char preBiasRightPos[] = new char[256];
 
-    public static int biasLeftToPos[][] = new int[30][15];
-    public static int biasRightToPos[][] = new int[30][15];
+    public static short biasLeftToPos[][] = new short[30][15];
+    public static short biasRightToPos[][] = new short[30][15];
 
     public static int presetScore[] = new int[14348907];
 
     public static int presetPow[][] = new int[15][3];
+
+    private static int progressValue = 0;
+
+    public static void load(){
+        Thread initThread = new Thread() {
+            public void run() {
+                initPreset();
+            }
+        };
+        initThread.start();
+
+        JFrame loading = new JFrame();
+        loading.setUndecorated(true);
+        JProgressBar progress = new JProgressBar(0, 14348907);
+        loading.add(progress);
+        progress.setValue(0);
+        progress.setStringPainted(true);
+        loading.setSize(400, 50);
+        loading.setLocation(300, 300);
+        loading.setVisible(true);
+        Thread progressThread = new Thread() {
+            public void run() {
+                while(true){
+                    if(progressValue >= 14348906) break;
+                    progress.setValue(progressValue);
+                    progress.setString(String.format("%.0f", ((progressValue / 14348907.0) * 100)) + "%");
+                    try {
+                        sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                loading.setVisible(false);
+                App.menu = new Menu();
+		        App.game = new GameGUI();
+                App.menu.open();
+            }
+        };
+        progressThread.start();
+    }
 
     public static void initPreset(){
         // 生成着法预置数组
         for(int i = 0; i < 15; i++){
             for(int bit = 0; bit < 32768; bit++){
                 int maskLeft = 1 << i, maskRight = 1 << i;
-                preGenerate[i][bit][0] = i;
-                preGenerate[i][bit][1] = i;
+                preGenerate[i][bit][0] = (char)i;
+                preGenerate[i][bit][1] = (char)i;
                 maskLeft >>= 1;
                 while(maskLeft > 0 && (bit & maskLeft) == 0 && i - preGenerate[i][bit][0] < 2 && preGenerate[i][bit][0] > 0){ 
                     preGenerate[i][bit][0]--;
@@ -54,26 +101,26 @@ public class Util {
         // 斜线定位数组
         for(int i = 0; i < 15; i++){
             for(int j = 0; j < 15; j++){
-                preBiasLeftIndex[(i << 4) + j] = i + j;
-                preBiasRightIndex[(i << 4) + j] = 14 - j + i;
+                preBiasLeftIndex[(i << 4) + j] = (char)(i + j);
+                preBiasRightIndex[(i << 4) + j] = (char)(14 - j + i);
             }
         }
 
         // 斜线上的定位数组
         for(int i = 0; i < 15; i++){
             for(int j = 0; j < 15 - i; j++){
-                preBiasLeftPos[(i << 4) + j] = j;
+                preBiasLeftPos[(i << 4) + j] = (char)j;
             }
             for(int j = 15 - i; j < 15; j++){
-                preBiasLeftPos[(i << 4) + j] = 14 - i;
+                preBiasLeftPos[(i << 4) + j] = (char)(14 - i);
             }
         }
         for(int i = 0; i < 15; i++){
             for(int j = 0; j < i; j++){
-                preBiasRightPos[(i << 4) + j] = j;
+                preBiasRightPos[(i << 4) + j] = (char)j;
             }
             for(int j = i; j < 15; j++){
-                preBiasRightPos[(i << 4) + j] = i;
+                preBiasRightPos[(i << 4) + j] = (char)i;
             }
         }
 
@@ -83,7 +130,7 @@ public class Util {
                 int row = i < 15? i:14;
                 row -= j;
                 int col = i < 15? j:j + i - 14;
-                biasLeftToPos[i][j] = (row << 4) + col;
+                biasLeftToPos[i][j] = (short) ((row << 4) + col);
             }
         }
         for(int i = 0; i < 29; i++){
@@ -91,7 +138,7 @@ public class Util {
                 int row = i < 15? j:j + i - 14;
                 int col = i < 15? 14 - i:0;
                 col += j; 
-                biasRightToPos[i][j] = (row << 4) + col;
+                biasRightToPos[i][j] = (short) ((row << 4) + col);
             }
         }
 
@@ -103,12 +150,11 @@ public class Util {
             }
         }
 
-        long start = System.currentTimeMillis();
         ACautomata acauto = new ACautomata();
         for(int i = 0; i <= 14348906; i++){
             presetScore[i] = acauto.matchScore(new StringBuilder(Integer.toString(i, 3)).reverse().toString(), 15);
+            progressValue++;
         }
-        System.out.println(System.currentTimeMillis() - start);
     }
 
     public static int getOpponent(int role){

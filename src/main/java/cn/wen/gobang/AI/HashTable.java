@@ -5,8 +5,8 @@ import java.security.SecureRandom;
 import cn.wen.gobang.Game;
 
 public class HashTable {
-    private final int TABLE_SIZE = 1 << 24;
-    private final int TABLE_SIZE_MASK = (1 << 24) - 1;
+    private final int TABLE_SIZE = 1 << 22;
+    private final int TABLE_SIZE_MASK = (1 << 22) - 1;
 
     public static final int hashAlpha = 1;
     public static final int hashBeta = 2;
