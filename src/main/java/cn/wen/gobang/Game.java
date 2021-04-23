@@ -415,7 +415,7 @@ public class Game {
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
             // 只考虑高分位置，能成活三活四或堵对方活三的位置
-            if(move.getScore() < 1200) break;
+            if(move.getScore() < 1200 || i > 5) break;
             
             if(makeMove(move.getPosition())){
                 score = MAX_SCORE - step;
@@ -463,7 +463,7 @@ public class Game {
 
         if(depth <= 0){
             // 开始静态搜索
-            score = quiescentSearch(4, alpha, beta);
+            score = quiescentSearch(6, alpha, beta);
             return score;
         }
 
@@ -475,7 +475,7 @@ public class Game {
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
             // 剪掉一些分数较低的着法
-            if(move.getScore() < 100) break;    
+            if(move.getScore() < 100 || i > 20) break;    
 
             if(makeMove(move.getPosition())){
                 score = MAX_SCORE - step;
