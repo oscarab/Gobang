@@ -10,6 +10,9 @@ public class App
 	public static GameGUI game;
     public static void main( String[] args )
     {
-        Util.load();
+        Util.initPreset();
+        menu = new Menu();
+		game = new GameGUI();
+        menu.open();
     }
 }

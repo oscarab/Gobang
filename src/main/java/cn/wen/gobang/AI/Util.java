@@ -1,11 +1,9 @@
 package cn.wen.gobang.AI;
 
-import javax.swing.JFrame;
-import javax.swing.JProgressBar;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 import cn.wen.gobang.App;
-import cn.wen.gobang.gui.GameGUI;
-import cn.wen.gobang.gui.Menu;
 
 public class Util {
     public static char preGenerate[][][] = new char[15][32768][2];
@@ -22,46 +20,6 @@ public class Util {
     public static int presetScore[] = new int[14348907];
 
     public static int presetPow[][] = new int[15][3];
-
-    private static int progressValue = 0;
-
-    public static void load(){
-        Thread initThread = new Thread() {
-            public void run() {
-                initPreset();
-            }
-        };
-        initThread.start();
-
-        JFrame loading = new JFrame();
-        loading.setUndecorated(true);
-        JProgressBar progress = new JProgressBar(0, 14348907);
-        loading.add(progress);
-        progress.setValue(0);
-        progress.setStringPainted(true);
-        loading.setSize(400, 50);
-        loading.setLocation(300, 300);
-        loading.setVisible(true);
-        Thread progressThread = new Thread() {
-            public void run() {
-                while(true){
-                    if(progressValue >= 14348906) break;
-                    progress.setValue(progressValue);
-                    progress.setString(String.format("%.0f", ((progressValue / 14348907.0) * 100)) + "%");
-                    try {
-                        sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                loading.setVisible(false);
-                App.menu = new Menu();
-		        App.game = new GameGUI();
-                App.menu.open();
-            }
-        };
-        progressThread.start();
-    }
 
     public static void initPreset(){
         // 生成着法预置数组
@@ -150,10 +108,20 @@ public class Util {
             }
         }
 
-        ACautomata acauto = new ACautomata();
-        for(int i = 0; i <= 14348906; i++){
-            presetScore[i] = acauto.matchScore(new StringBuilder(Integer.toString(i, 3)).reverse().toString(), 15);
-            progressValue++;
+        // ACautomata acauto = new ACautomata();
+        try {
+            // for(int i = 0; i <= 14348906; i++){
+            //     presetScore[i] = acauto.matchScore(new StringBuilder(Integer.toString(i, 3)).reverse().toString(), 15);
+            //     progressValue++;
+            // }
+            // ObjectOutputStream f = new ObjectOutputStream(new FileOutputStream("F:/data.txt"));
+            // f.writeObject(presetScore);
+            // f.close();
+            ObjectInputStream f = new ObjectInputStream(App.class.getClassLoader().getResourceAsStream("data.txt"));
+            presetScore = (int[]) f.readObject();
+            f.close();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
         }
     }
 
