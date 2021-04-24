@@ -43,8 +43,9 @@ public class GameGUI extends JFrame{
     private int now = 0;						// 当前执子方
     private Movement AImove = Game.NONE_MOVE;	// AI走的位置
 
+	private Message message;
 	private boolean isHard = true;
-	private boolean isOpenMessage = false;
+	private boolean isOpenMessage = true;
 
     public GameGUI(){
         Container container = getContentPane();
@@ -90,7 +91,12 @@ public class GameGUI extends JFrame{
 		startGame.setFont(new Font("Dialog ", Font.CENTER_BASELINE, 25));
 		startGame.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				message = new Message();
 				game = isHard? new GameAlphaBeta():new GameMinMax();
+				if(isOpenMessage){
+					game.setMessage(message);
+					message.open();
+				}
 				board.repaint();
 
 				String[] options = { "先手", "后手" };
@@ -224,6 +230,7 @@ public class GameGUI extends JFrame{
         isStart = false;
 		updateInfo();
 		board.repaint();
+		message.close();
     }
 
     public void AIact(boolean isFirst){

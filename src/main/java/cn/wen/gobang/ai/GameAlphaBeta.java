@@ -7,6 +7,8 @@ import cn.wen.gobang.util.HashTable;
 import cn.wen.gobang.util.Movement;
 
 public class GameAlphaBeta extends Game{
+    private int searchNode = 0;
+    private int betaNode = 0;
 
     /**
      * 静态搜索
@@ -40,7 +42,7 @@ public class GameAlphaBeta extends Game{
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
             // 只考虑高分位置，能成活三活四或堵对方活三的位置
-            if(move.getScore() < 1200 || i > 5) break;
+            if(move.getScore() < 1200 || i > 8) break;
             
             if(makeMove(move.getPosition())){
                 score = MAX_SCORE - step;
@@ -103,7 +105,8 @@ public class GameAlphaBeta extends Game{
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
             // 剪掉一些分数较低的着法
-            if(move.getScore() < 100 || i > 20) break;    
+            if(move.getScore() < 100 || i > 23) break;
+            searchNode++;    
 
             // 执行一个走法
             if(makeMove(move.getPosition())){
@@ -116,6 +119,7 @@ public class GameAlphaBeta extends Game{
             unMakeMove(move.getPosition());
 
             if(score >= beta){
+                betaNode++;
                 hashTable.saveHashTable(depth, step, beta, HashTable.hashBeta);
                 return beta;
             }
@@ -143,29 +147,44 @@ public class GameAlphaBeta extends Game{
     }
 
     public boolean AIthink() {
-        int score = 0;
+        int score = 0, best = 0;
         step = 0;
+        searchNode = 0;
+        betaNode = 0;
         isLimited = false;
         hashTable.clear();
         startTime = System.currentTimeMillis();
         Movement bestMoveSave = NONE_MOVE;
 
+        outMessage("开始迭代加深搜索");
         for(maxDepth = 1; maxDepth <= 6; maxDepth++){
             score = alphaBetaSearch(maxDepth, NONE_SCORE, -NONE_SCORE);
-            System.out.println((System.currentTimeMillis() - startTime) + "ms");
+            outMessage("完成深度为" + maxDepth + "的搜索，总已花费时间" + (System.currentTimeMillis() - startTime) + "ms");
 
             // 检查是否时间超限
             if(isLimited) break;
-            else bestMoveSave = bestMove;
+            else {
+                bestMoveSave = bestMove;
+                best = score;
+            }
 
             // 已找到必胜走法直接返回
             if(score > WIN_SCORE) break;
         }
 
         bestMove = bestMoveSave;
-        System.out.println("best score:" + score);
+        outMessage("是否发生搜索超时: " + isLimited);
+        outMessage("总搜索结点数: " + searchNode);
+        outMessage("发生剪枝的结点数: " + betaNode);
+        outMessage("最佳走法: " + bestMove.getX() + "," + bestMove.getY() + " 分值: " + best);
+        outMessage("----------结束----------");
         gameOut[bestMove.getX()][bestMove.getY()] = currentRole;
         
         return makeMove(bestMove.getPosition());
+    }
+
+    private void outMessage(String str){
+        if(message != null)
+            message.appendMessage(str);
     }
 }

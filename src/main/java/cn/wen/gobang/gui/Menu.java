@@ -67,6 +67,7 @@ public class Menu extends JFrame{
 		setLocation(500, 100);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     }
+	
     public void open() {
 		setVisible(true);
 	}

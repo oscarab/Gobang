@@ -1,9 +1,9 @@
 package cn.wen.gobang.ai;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+import cn.wen.gobang.gui.Message;
 import cn.wen.gobang.util.HashTable;
 import cn.wen.gobang.util.Movement;
 import cn.wen.gobang.util.Util;
@@ -38,16 +38,19 @@ public abstract class Game {
 
     protected HashTable hashTable;
 
-    public static final int NONE_SCORE = -2000000000;
-    public static final Movement NONE_MOVE = new Movement(-1, -1);
-    public static final int MAX_SCORE = 1000000000;
-    public static final int WIN_SCORE = MAX_SCORE - 24;
     protected int step;
     protected int maxDepth = 6;
 
     protected long maxTime = 20000;
     protected long startTime = 0;
     protected boolean isLimited = false;
+
+    protected Message message = null;
+
+    public static final int NONE_SCORE = -2000000000;
+    public static final Movement NONE_MOVE = new Movement(-1, -1);
+    public static final int MAX_SCORE = 1000000000;
+    public static final int WIN_SCORE = MAX_SCORE - 24;
 
     public Game(){
         hashTable = new HashTable();
@@ -60,6 +63,10 @@ public abstract class Game {
                 bitBiasRight[role][28 - i] = 1 >> (i + 1);
             }
         }
+    }
+
+    public void setMessage(Message msg){
+        message = msg;
     }
 
     public Movement getLastMove(){

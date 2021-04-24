@@ -37,6 +37,7 @@ public class Setting extends JDialog{
 
         JPanel panel2 = new JPanel();
         JRadioButton select = new JRadioButton("显示搜索信息");
+        select.setSelected(true);
         select.setFont(new Font("Dialog ", 1, 15));
         panel2.add(select);
 
