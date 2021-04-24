@@ -17,6 +17,7 @@ import cn.wen.gobang.App;
 
 public class Menu extends JFrame{
     private static final long serialVersionUID = 1L;
+
     public Menu(){
         Container maincon = getContentPane();
 		Box box = Box.createVerticalBox();
@@ -41,6 +42,11 @@ public class Menu extends JFrame{
 
 		JButton setting = new JButton("选        项");
 		setting.setFont(new Font("Dialog ", 1, 25));
+		setting.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				new Setting(App.menu);
+			}
+		});
 		box.add(Box.createVerticalStrut(20));
 		box.add(setting);
 

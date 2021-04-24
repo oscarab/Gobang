@@ -1,7 +1,9 @@
-package cn.wen.gobang.AI;
+package cn.wen.gobang.util;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import cn.wen.gobang.App;
 
@@ -108,19 +110,27 @@ public class Util {
             }
         }
 
-        // ACautomata acauto = new ACautomata();
         try {
-            // for(int i = 0; i <= 14348906; i++){
-            //     presetScore[i] = acauto.matchScore(new StringBuilder(Integer.toString(i, 3)).reverse().toString(), 15);
-            //     progressValue++;
-            // }
-            // ObjectOutputStream f = new ObjectOutputStream(new FileOutputStream("F:/data.txt"));
-            // f.writeObject(presetScore);
-            // f.close();
             ObjectInputStream f = new ObjectInputStream(App.class.getClassLoader().getResourceAsStream("data.txt"));
             presetScore = (int[]) f.readObject();
             f.close();
         } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void saveScore(){
+        ACautomata acauto = new ACautomata();
+        for(int i = 0; i <= 14348906; i++){
+            presetScore[i] = acauto.matchScore(new StringBuilder(Integer.toString(i, 3)).reverse().toString(), 15);
+        }
+        
+        ObjectOutputStream f;
+        try {
+            f = new ObjectOutputStream(new FileOutputStream("F:/data.txt"));
+            f.writeObject(presetScore);
+            f.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

@@ -1,7 +1,7 @@
 package cn.wen.gobang;
 
-import cn.wen.gobang.AI.Util;
 import cn.wen.gobang.gui.Menu;
+import cn.wen.gobang.util.Util;
 import cn.wen.gobang.gui.GameGUI;
 
 public class App 

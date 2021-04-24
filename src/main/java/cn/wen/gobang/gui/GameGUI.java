@@ -25,21 +25,26 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import cn.wen.gobang.App;
-import cn.wen.gobang.Game;
-import cn.wen.gobang.AI.Movement;
-import cn.wen.gobang.AI.Util;
+import cn.wen.gobang.ai.Game;
+import cn.wen.gobang.ai.GameAlphaBeta;
+import cn.wen.gobang.ai.GameMinMax;
+import cn.wen.gobang.util.Movement;
+import cn.wen.gobang.util.Util;
 
 public class GameGUI extends JFrame{
     private static final long serialVersionUID = 1L;
 
-    public JPanel board;						// 棋盘
-	public JPanel gameInfo;						// 信息显示
+    private JPanel board;						// 棋盘
+	private JPanel gameInfo;					// 信息显示
     private Game game;							// 当前游戏
     private boolean isStart = false;			// 游戏是否开始
     private int AI = 2;							// AI执子颜色
     private int player = 1;						// 玩家执子颜色
     private int now = 0;						// 当前执子方
     private Movement AImove = Game.NONE_MOVE;	// AI走的位置
+
+	private boolean isHard = true;
+	private boolean isOpenMessage = false;
 
     public GameGUI(){
         Container container = getContentPane();
@@ -60,7 +65,7 @@ public class GameGUI extends JFrame{
 						if(pos != -1){
 							if (game.directMove(pos)) {
 								board.repaint();
-								gameEnd(player);
+								finishGame(player);
 								return;
 							}
 							now = 1; // 变为电脑执子
@@ -85,6 +90,9 @@ public class GameGUI extends JFrame{
 		startGame.setFont(new Font("Dialog ", Font.CENTER_BASELINE, 25));
 		startGame.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				game = isHard? new GameAlphaBeta():new GameMinMax();
+				board.repaint();
+
 				String[] options = { "先手", "后手" };
 				int choose = JOptionPane.showOptionDialog(null, "请选择先手或后手：", "先后手选择", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
 				if(choose == 0) player = 1;
@@ -92,6 +100,7 @@ public class GameGUI extends JFrame{
 				now = player - 1;
 				AI = Util.getOpponent(player);
 				isStart = true;
+				
 				updateInfo();
 				AIact(true);
 			}
@@ -109,7 +118,7 @@ public class GameGUI extends JFrame{
 		lose.setFont(new Font("Dialog ", Font.CENTER_BASELINE, 25));
 		lose.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				gameEnd(AI);
+				finishGame(AI);
 			}
 		});
 		JButton back = new JButton("返回");
@@ -146,7 +155,7 @@ public class GameGUI extends JFrame{
 		setLocation(100, 50);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        game = new Game();
+		game = isHard? new GameAlphaBeta():new GameMinMax();
 		updateInfo();
     }
 
@@ -196,7 +205,15 @@ public class GameGUI extends JFrame{
 		setVisible(false);
 	}
 
-    public void gameEnd(int type){
+	public void setHard(boolean flag){
+		isHard = flag;
+	}
+
+	public void setMessageShow(boolean flag){
+		isOpenMessage = flag;
+	}
+
+    public void finishGame(int type){
         if(type == player){
             JOptionPane.showMessageDialog(null, "恭喜你胜利了");
         }
@@ -206,7 +223,6 @@ public class GameGUI extends JFrame{
         AImove = Game.NONE_MOVE;
         isStart = false;
 		updateInfo();
-        game = new Game();
 		board.repaint();
     }
 
@@ -224,7 +240,7 @@ public class GameGUI extends JFrame{
 				public void run() {
 					if(game.AIthink()){
                         board.repaint();
-                        gameEnd(AI);
+                        finishGame(AI);
 						return;
                     }
 					Movement move = game.getLastMove();

@@ -1,8 +1,8 @@
-package cn.wen.gobang.AI;
+package cn.wen.gobang.util;
 
 import java.security.SecureRandom;
 
-import cn.wen.gobang.Game;
+import cn.wen.gobang.ai.Game;
 
 public class HashTable {
     private final int TABLE_SIZE = 1 << 22;

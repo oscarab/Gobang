@@ -1,4 +1,4 @@
-package cn.wen.gobang.AI;
+package cn.wen.gobang.util;
 
 public class Movement implements Comparable<Movement>{
     private int score;

@@ -1,4 +1,4 @@
-package cn.wen.gobang.AI;
+package cn.wen.gobang.util;
 
 import java.util.LinkedList;
 import java.util.Queue;
