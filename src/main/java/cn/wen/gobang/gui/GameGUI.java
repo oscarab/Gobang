@@ -44,8 +44,8 @@ public class GameGUI extends JFrame{
     private Movement AImove = Game.NONE_MOVE;	// AI走的位置
 
 	private Message message;
-	private boolean isHard = true;
-	private boolean isOpenMessage = true;
+	private boolean isHard = true;				// 是否为普通模式
+	private boolean isOpenMessage = true;		// 是否打开信息展示
 
     public GameGUI(){
         Container container = getContentPane();
@@ -165,6 +165,12 @@ public class GameGUI extends JFrame{
 		updateInfo();
     }
 
+	/**
+	 * 获取按到的位置
+	 * @param x	x坐标
+	 * @param y	y坐标
+	 * @return	int 位置
+	 */
 	private int getClickPosition(int x, int y){
 		if(x <= 600 & y <= 600){
 			for (int i = 30; i <= 590; i = i + 40) {
@@ -179,6 +185,9 @@ public class GameGUI extends JFrame{
 		return -1;
 	}
 
+	/**
+	 * 更新游戏状态面板
+	 */
 	private void updateInfo(){
 		JLabel state = (JLabel) gameInfo.getComponent(1);
 		gameInfo.getComponent(7).setEnabled(false);
@@ -219,7 +228,11 @@ public class GameGUI extends JFrame{
 		isOpenMessage = flag;
 	}
 
-    public void finishGame(int type){
+	/**
+	 * 游戏结束
+	 * @param type	胜利方
+	 */
+    private void finishGame(int type){
         if(type == player){
             JOptionPane.showMessageDialog(null, "恭喜你胜利了");
         }
@@ -233,10 +246,15 @@ public class GameGUI extends JFrame{
 		message.close();
     }
 
+	/**
+	 * AI下子
+	 * @param isFirst	是否为第一个
+	 */
     public void AIact(boolean isFirst){
 		// 若为电脑执子，打开AI开始下棋
 		if (now == 1) { 
 			if(isFirst){
+				// AI下第一个子，下在中央
 				game.directMove((7 << 4) + 7);
 				board.repaint();
 				now = 0;

@@ -331,14 +331,22 @@ public abstract class Game {
         strRow[row] += Util.presetPow[col][role];
         strCol[col] += Util.presetPow[row][role];
         strBiasLeft[lbindex] += Util.presetPow[Util.preBiasLeftPos[pos]][role];
+        if((row == 0 || col == 14) && Util.preBiasLeftPos[pos] < 14)
+            strBiasLeft[lbindex] += Util.presetPow[Util.preBiasLeftPos[pos] + 1][Util.getOpponent(role)];
         strBiasRight[rbindex] += Util.presetPow[Util.preBiasRightPos[pos]][role];
+        if((row == 14 || col == 14) && Util.preBiasRightPos[pos] < 14)
+            strBiasRight[rbindex] += Util.presetPow[Util.preBiasRightPos[pos] + 1][Util.getOpponent(role)];
         GameMap[pos] = role;
     }
     protected void unMakePartMove(int pos, int row, int col, int lbindex, int rbindex){
         strRow[row] -= Util.presetPow[col][GameMap[pos]];
         strCol[col] -= Util.presetPow[row][GameMap[pos]];
         strBiasLeft[lbindex] -= Util.presetPow[Util.preBiasLeftPos[pos]][GameMap[pos]];
+        if((row == 0 || col == 14) && Util.preBiasLeftPos[pos] < 14)
+            strBiasLeft[lbindex] -= Util.presetPow[Util.preBiasLeftPos[pos] + 1][Util.getOpponent(GameMap[pos])];
         strBiasRight[rbindex] -= Util.presetPow[Util.preBiasRightPos[pos]][GameMap[pos]];
+        if((row == 14 || col == 14) && Util.preBiasRightPos[pos] < 14)
+            strBiasRight[rbindex] -= Util.presetPow[Util.preBiasRightPos[pos] + 1][Util.getOpponent(GameMap[pos])];
         GameMap[pos] = 0;
     }
 
@@ -362,6 +370,15 @@ public abstract class Game {
         int newRightScore = Util.presetScore[strBiasRight[rbindex]];
         currentScore += newRightScore - biasRightScore[rbindex];
         biasRightScore[rbindex] = newRightScore;
+    }
+
+    /**
+     * 发送信息到显示框
+     * @param str   要显示的信息
+     */
+    protected void outMessage(String str){
+        if(message != null)
+            message.appendMessage(str);
     }
 
 }

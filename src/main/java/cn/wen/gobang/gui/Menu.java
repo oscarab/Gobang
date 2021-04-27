@@ -15,6 +15,7 @@ import javax.swing.WindowConstants;
 
 import cn.wen.gobang.App;
 
+// 菜单界面
 public class Menu extends JFrame{
     private static final long serialVersionUID = 1L;
 
@@ -29,6 +30,7 @@ public class Menu extends JFrame{
 		topic.setForeground(Color.BLUE);
 		box.add(topic);
 
+		// 开始游戏按钮
 		JButton start = new JButton("开始游戏");
 		start.setFont(new Font("Dialog ", 1, 25));
 		start.addActionListener(new ActionListener() {
@@ -40,6 +42,7 @@ public class Menu extends JFrame{
 		box.add(Box.createVerticalStrut(20));
 		box.add(start);
 
+		// 设置选项
 		JButton setting = new JButton("选        项");
 		setting.setFont(new Font("Dialog ", 1, 25));
 		setting.addActionListener(new ActionListener() {
@@ -50,6 +53,7 @@ public class Menu extends JFrame{
 		box.add(Box.createVerticalStrut(20));
 		box.add(setting);
 
+		// 退出程序
 		JButton quit = new JButton("退        出");
 		quit.setFont(new Font("Dialog ", 1, 25));
 		quit.addActionListener(new ActionListener() {

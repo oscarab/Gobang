@@ -105,7 +105,7 @@ public class GameAlphaBeta extends Game{
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
             // 剪掉一些分数较低的着法
-            if(move.getScore() < 100 || i > 23) break;
+            if((move.getScore() < 100 && i > 10) || i > 23) break;
             searchNode++;    
 
             // 执行一个走法
@@ -181,10 +181,5 @@ public class GameAlphaBeta extends Game{
         gameOut[bestMove.getX()][bestMove.getY()] = currentRole;
         
         return makeMove(bestMove.getPosition());
-    }
-
-    private void outMessage(String str){
-        if(message != null)
-            message.appendMessage(str);
     }
 }
