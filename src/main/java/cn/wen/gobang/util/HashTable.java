@@ -14,11 +14,11 @@ public class HashTable {
 
     private long[][] zobristTable = new long[3][256];
     private long[][] zobristCheckTable = new long[3][256];
-    private long key;
-    private long checkKey;
-    private long playKey;
-    private long playCheckKey;
-    private Zobrist[] hashtable = new Zobrist[TABLE_SIZE];
+    private long key;                                       // 当前局面哈希值
+    private long checkKey;                                  // 校验值
+    private long playKey;                                   // 走棋方哈希值(同一局面不同走棋方会有不同分值)
+    private long playCheckKey;                              // 走棋方校验值
+    private Zobrist[] hashtable = new Zobrist[TABLE_SIZE];  // 置换表
 
     public HashTable(){
         SecureRandom random = new SecureRandom();
@@ -38,6 +38,11 @@ public class HashTable {
         hashtable = new Zobrist[TABLE_SIZE];
     }
 
+    /**
+     * 更新当前局面哈希值
+     * @param pos   所走的位置
+     * @param role  走方
+     */
     public void update(int pos, int role){
         key ^= zobristTable[role][pos];
         key ^= playKey;

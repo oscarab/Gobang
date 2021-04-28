@@ -1,10 +1,10 @@
 package cn.wen.gobang.util;
 
 public class Zobrist {
-    private long checkKey;
-    private int score;
-    private int depth;
-    private int type;
+    private long checkKey;  // 校验值
+    private int score;      // 分值
+    private int depth;      // 搜索深度
+    private int type;       // 结点类型
     
     public Zobrist(long checkKey, int score, int depth, int type) {
         this.checkKey = checkKey;

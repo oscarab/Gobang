@@ -41,9 +41,9 @@ public abstract class Game {
     protected int step;
     protected int maxDepth = 6;
 
-    protected long maxTime = 20000;
-    protected long startTime = 0;
-    protected boolean isLimited = false;
+    protected long maxTime = 20000;         // 搜索时间限制20s
+    protected long startTime = 0;           // 搜索开始时间
+    protected boolean isLimited = false;    // 是否已经超时
 
     protected Message message = null;
 

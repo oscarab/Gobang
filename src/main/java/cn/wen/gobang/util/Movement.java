@@ -1,8 +1,9 @@
 package cn.wen.gobang.util;
 
 public class Movement implements Comparable<Movement>{
-    private int score;
-    private int position;
+    private int score;      // 分值
+    private int position;   // 下子位置
+    
     public Movement(int score, int position){
         this.score = score;
         this.position = position;

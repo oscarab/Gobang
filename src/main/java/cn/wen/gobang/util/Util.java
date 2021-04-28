@@ -8,20 +8,20 @@ import java.io.ObjectOutputStream;
 import cn.wen.gobang.App;
 
 public class Util {
-    public static char preGenerate[][][] = new char[15][32768][2];
-    public static boolean preWin[] = new boolean[32768];
+    public static char preGenerate[][][] = new char[15][32768][2];      // 预置生成数组
+    public static boolean preWin[] = new boolean[32768];                // 预置胜利局面
 
-    public static char preBiasLeftIndex[] = new char[256];
-    public static char preBiasRightIndex[] = new char[256];
-    public static char preBiasLeftPos[] = new char[256];
-    public static char preBiasRightPos[] = new char[256];
+    public static char preBiasLeftIndex[] = new char[256];              // 正斜条数定位
+    public static char preBiasRightIndex[] = new char[256];             // 反斜条数定位
+    public static char preBiasLeftPos[] = new char[256];                // 正斜线上位置
+    public static char preBiasRightPos[] = new char[256];               // 反斜线上位置
 
-    public static short biasLeftToPos[][] = new short[30][15];
+    public static short biasLeftToPos[][] = new short[30][15];          // 斜线定位转实际定位
     public static short biasRightToPos[][] = new short[30][15];
 
-    public static int presetScore[] = new int[14348907];
+    public static int presetScore[] = new int[14348907];                // 预置棋形分数
 
-    public static int presetPow[][] = new int[15][3];
+    public static int presetPow[][] = new int[15][3];                   // 预置次幂
 
     public static void initPreset(){
         // 生成着法预置数组
@@ -111,6 +111,7 @@ public class Util {
         }
 
         try {
+            // 打开分数文件(已提前生成并内置于资源文件夹中)
             ObjectInputStream f = new ObjectInputStream(App.class.getClassLoader().getResourceAsStream("data.txt"));
             presetScore = (int[]) f.readObject();
             f.close();
