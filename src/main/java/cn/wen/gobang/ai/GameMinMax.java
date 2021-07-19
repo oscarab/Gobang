@@ -88,9 +88,10 @@ public class GameMinMax extends Game{
     public boolean AIthink() {
         searchNode = 0;
         long startTime = System.currentTimeMillis();
-        maxSearch(4);   // 仅搜索四层
+        int best = maxSearch(4);   // 仅搜索四层
         outMessage("消耗时间: " + (System.currentTimeMillis() - startTime) + "ms");
         outMessage("总搜索结点数: " + searchNode);
+        outMessage("最佳走法: " + bestMove.getX() + "," + bestMove.getY() + " 分值: " + best);
         outMessage("----------结束----------");
 
         gameOut[bestMove.getX()][bestMove.getY()] = currentRole;

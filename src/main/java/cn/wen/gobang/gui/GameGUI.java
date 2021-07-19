@@ -28,6 +28,7 @@ import cn.wen.gobang.App;
 import cn.wen.gobang.ai.Game;
 import cn.wen.gobang.ai.GameAlphaBeta;
 import cn.wen.gobang.ai.GameMinMax;
+import cn.wen.gobang.ai.GamePV;
 import cn.wen.gobang.util.Movement;
 import cn.wen.gobang.util.Util;
 
@@ -44,7 +45,7 @@ public class GameGUI extends JFrame{
     private Movement AImove = Game.NONE_MOVE;	// AI走的位置
 
 	private Message message;
-	private boolean isHard = true;				// 是否为普通模式
+	private int isHard = 1;				        // 游戏难度
 	private boolean isOpenMessage = true;		// 是否打开信息展示
 
     public GameGUI(){
@@ -92,7 +93,7 @@ public class GameGUI extends JFrame{
 		startGame.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				message = new Message();
-				game = isHard? new GameAlphaBeta():new GameMinMax();
+				game = getGame();
 				if(isOpenMessage){
 					game.setMessage(message);
 					message.open();
@@ -161,10 +162,15 @@ public class GameGUI extends JFrame{
 		setLocation(100, 50);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-		game = isHard? new GameAlphaBeta():new GameMinMax();
+		game = getGame();
 		updateInfo();
     }
 
+    private Game getGame(){
+        if(isHard == 0) return new GameMinMax();
+        else if(isHard == 1) return new GameAlphaBeta();
+        else return new GamePV();
+    }
 	/**
 	 * 获取按到的位置
 	 * @param x	x坐标
@@ -220,7 +226,7 @@ public class GameGUI extends JFrame{
 		setVisible(false);
 	}
 
-	public void setHard(boolean flag){
+	public void setHard(int flag){
 		isHard = flag;
 	}
 

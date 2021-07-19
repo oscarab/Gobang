@@ -30,8 +30,10 @@ public class Setting extends JDialog{
         label.setFont(new Font("Dialog ", 1, 15));
         JComboBox<String> comboBox = new JComboBox<>();
         comboBox.setFont(new Font("Dialog ", 1, 15));
-        comboBox.addItem("普通");
         comboBox.addItem("简单");
+        comboBox.addItem("普通");
+        comboBox.addItem("困难");
+        comboBox.setSelectedIndex(1);
         panel.add(label);
         panel.add(comboBox);
 
@@ -46,7 +48,7 @@ public class Setting extends JDialog{
         button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 App.game.setMessageShow(select.isSelected());
-                App.game.setHard(comboBox.getSelectedIndex() == 0);
+                App.game.setHard(comboBox.getSelectedIndex());
                 setVisible(false);
             }
 		});

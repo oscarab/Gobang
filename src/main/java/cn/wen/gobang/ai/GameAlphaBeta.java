@@ -7,8 +7,8 @@ import cn.wen.gobang.util.HashTable;
 import cn.wen.gobang.util.Movement;
 
 public class GameAlphaBeta extends Game{
-    private int searchNode = 0;
-    private int betaNode = 0;
+    protected int searchNode = 0;
+    protected int betaNode = 0;
 
     /**
      * 静态搜索
@@ -17,7 +17,7 @@ public class GameAlphaBeta extends Game{
      * @param beta  beta值
      * @return  int 评估分数
      */
-    private int quiescentSearch(int depth, int alpha, int beta){
+    protected int quiescentSearch(int depth, int alpha, int beta){
         int score = 0, best = 0;
         Movement move;
         List<Movement> moveLists;
@@ -72,7 +72,7 @@ public class GameAlphaBeta extends Game{
      * @param beta
      * @return  int 最好走法的分值
      */
-    private int alphaBetaSearch(int depth, int alpha, int beta){
+    protected int search(int depth, int alpha, int beta){
         int score = 0;              // 当前分值
         int best;                   // 最好的分值
         Movement move;              // 当前着法
@@ -113,7 +113,7 @@ public class GameAlphaBeta extends Game{
                 score = MAX_SCORE - step;   // 若胜利则返回一个极大值
             }
             else{
-                score = -alphaBetaSearch(depth - 1, -beta, -alpha);
+                score = -search(depth - 1, -beta, -alpha);
             }
             // 回溯一个走法
             unMakeMove(move.getPosition());
@@ -158,7 +158,7 @@ public class GameAlphaBeta extends Game{
 
         outMessage("开始迭代加深搜索");
         for(maxDepth = 1; maxDepth <= 6; maxDepth++){
-            score = alphaBetaSearch(maxDepth, NONE_SCORE, -NONE_SCORE);
+            score = search(maxDepth, NONE_SCORE, -NONE_SCORE);
             outMessage("完成深度为" + maxDepth + "的搜索，总已花费时间" + (System.currentTimeMillis() - startTime) + "ms");
 
             // 检查是否时间超限
