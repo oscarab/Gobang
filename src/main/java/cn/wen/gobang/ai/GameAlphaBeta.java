@@ -157,7 +157,7 @@ public class GameAlphaBeta extends Game{
         Movement bestMoveSave = NONE_MOVE;
 
         outMessage("开始迭代加深搜索");
-        for(maxDepth = 1; maxDepth <= 6; maxDepth++){
+        for(maxDepth = 1; maxDepth <= 6; maxDepth+=(maxDepth > 1 ? 2 : 1)){
             score = search(maxDepth, NONE_SCORE, -NONE_SCORE);
             outMessage("完成深度为" + maxDepth + "的搜索，总已花费时间" + (System.currentTimeMillis() - startTime) + "ms");
 
