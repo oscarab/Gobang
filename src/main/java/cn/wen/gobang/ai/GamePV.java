@@ -32,7 +32,7 @@ public class GamePV extends GameAlphaBeta{
 
         if(depth <= 0){
             // 开始静态搜索
-            score = quiescentSearch(6, alpha, beta);
+            score = quiescentSearch(killSearchDepth, alpha, beta);
             return score;
         }
 
@@ -43,7 +43,7 @@ public class GamePV extends GameAlphaBeta{
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
             // 剪掉一些分数较低的着法
-            if(move.getScore() < 100) break;
+            if(i > 20) break;
             searchNode++;    
 
             // 执行一个走法

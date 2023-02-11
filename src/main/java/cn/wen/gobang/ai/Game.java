@@ -36,10 +36,12 @@ public abstract class Game {
     protected int chessCount = 0;
     protected Movement bestMove;
 
-    protected HashTable hashTable;
+    protected HashTable hashTable;          // 置换表
 
     protected int step;
-    protected int maxDepth = 6;
+    protected int maxDepth;
+    protected int fullSearchDepth = 8;
+    protected int killSearchDepth = 2;
 
     protected long maxTime = 20000;         // 搜索时间限制20s
     protected long startTime = 0;           // 搜索开始时间
@@ -75,6 +77,11 @@ public abstract class Game {
 
     public int get(int x, int y){
         return gameOut[x][y];
+    }
+
+    public void setSearchDepth(int full, int kill) {
+        fullSearchDepth = full;
+        killSearchDepth = kill;
     }
 
     /**
@@ -185,82 +192,52 @@ public abstract class Game {
             int row = Util.getRow(pos), col = Util.getCol(pos);
 
             // 水平方向
-            for(int j = Util.preGenerate[col][bitRow[0][row]][0]; j < col; j++){
-                if(!visit[(row << 4) + j]){
-                    Movement move = new Movement(0, (row << 4) + j);
-                    move.setScore(evaluate((row << 4) + j));
-                    moveLists.add(move);
-                    visit[(row << 4) + j] = true;
-                }
-            }
-            for(int j = col + 1; j <= Util.preGenerate[col][bitRow[0][row]][1]; j++){
-                if(!visit[(row << 4) + j]){
-                    Movement move = new Movement(0, (row << 4) + j);
-                    move.setScore(evaluate((row << 4) + j));
-                    moveLists.add(move);
-                    visit[(row << 4) + j] = true;                    
-                }
+            for(int j = Util.preGenerate[col][bitRow[0][row]][0]; j <= Util.preGenerate[col][bitRow[0][row]][1]; j++){
+                if (j == col) continue;
+                if(visit[(row << 4) + j]) continue;
+
+                Movement move = new Movement(0, (row << 4) + j);
+                move.setScore(evaluate((row << 4) + j));
+                moveLists.add(move);
+                visit[(row << 4) + j] = true;
             }
             // 竖直方向
-            for(int j = Util.preGenerate[row][bitCol[0][col]][0]; j < row; j++){
-                if(!visit[(j << 4) + col]){
-                    Movement move = new Movement(0, (j << 4) + col);
-                    move.setScore(evaluate((j << 4) + col));
-                    moveLists.add(move);
-                    visit[(j << 4) + col] = true;
-                }
-            }
-            for(int j = row + 1; j <= Util.preGenerate[row][bitCol[0][col]][1]; j++){
-                if(!visit[(j << 4) + col]){
-                    Movement move = new Movement(0, (j << 4) + col);
-                    move.setScore(evaluate((j << 4) + col));
-                    moveLists.add(move);
-                    visit[(j << 4) + col] = true;
-                }
+            for(int j = Util.preGenerate[row][bitCol[0][col]][0]; j <= Util.preGenerate[row][bitCol[0][col]][1]; j++){
+                if (j == row) continue;
+                if (visit[(j << 4) + col]) continue;
+
+                Movement move = new Movement(0, (j << 4) + col);
+                move.setScore(evaluate((j << 4) + col));
+                moveLists.add(move);
+                visit[(j << 4) + col] = true;
             }
             // 左斜
             int blindex = Util.preBiasLeftIndex[pos];
             int l = Util.preGenerate[Util.preBiasLeftPos[pos]][bitBiasLeft[0][blindex]][0];
             int r = Util.preGenerate[Util.preBiasLeftPos[pos]][bitBiasLeft[0][blindex]][1];
-            for(int j = l; j < Util.preBiasLeftPos[pos]; j++){
+            for(int j = l; j <= r && j <= (blindex>14?28-blindex:blindex); j++){
+                if (j == Util.preBiasLeftPos[pos]) continue;
                 int mpos = Util.biasLeftToPos[blindex][j];
-                if(!visit[mpos]){
-                    Movement move = new Movement(0, mpos);
-                    move.setScore(evaluate(mpos));
-                    moveLists.add(move);
-                    visit[mpos] = true;
-                }
-            }
-            for(int j = Util.preBiasLeftPos[pos] + 1; j <= r && j <= (blindex>14?28-blindex:blindex); j++){
-                int mpos = Util.biasLeftToPos[blindex][j];
-                if(!visit[mpos]){
-                    Movement move = new Movement(0, mpos);
-                    move.setScore(evaluate(mpos));
-                    moveLists.add(move);
-                    visit[mpos] = true;
-                }
+                if (visit[mpos]) continue;
+
+                Movement move = new Movement(0, mpos);
+                move.setScore(evaluate(mpos));
+                moveLists.add(move);
+                visit[mpos] = true;
             }
             // 右斜
             int brindex = Util.preBiasRightIndex[pos];
             l = Util.preGenerate[Util.preBiasRightPos[pos]][bitBiasRight[0][brindex]][0];
             r = Util.preGenerate[Util.preBiasRightPos[pos]][bitBiasRight[0][brindex]][1];
-            for(int j = l; j < Util.preBiasRightPos[pos]; j++){
+            for(int j = l; j <= r && j <= (brindex>14?28-brindex:brindex); j++){
+                if (j == Util.preBiasRightPos[pos]) continue;
                 int mpos = Util.biasRightToPos[brindex][j];
-                if(!visit[mpos]){
-                    Movement move = new Movement(0, mpos);
-                    move.setScore(evaluate(mpos));
-                    moveLists.add(move);
-                    visit[mpos] = true;
-                }
-            }
-            for(int j = Util.preBiasRightPos[pos] + 1; j <= r && j <= (brindex>14?28-brindex:brindex); j++){
-                int mpos = Util.biasRightToPos[brindex][j];
-                if(!visit[mpos]){
-                    Movement move = new Movement(0, mpos);
-                    move.setScore(evaluate(mpos));
-                    moveLists.add(move);
-                    visit[mpos] = true;
-                }
+                if (visit[mpos]) continue;
+
+                Movement move = new Movement(0, mpos);
+                move.setScore(evaluate(mpos));
+                moveLists.add(move);
+                visit[mpos] = true;
             }
         }
         return moveLists;

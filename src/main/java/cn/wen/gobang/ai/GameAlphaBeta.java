@@ -94,7 +94,7 @@ public class GameAlphaBeta extends Game{
 
         if(depth <= 0){
             // 开始静态搜索
-            score = quiescentSearch(6, alpha, beta);
+            score = quiescentSearch(killSearchDepth, alpha, beta);
             return score;
         }
 
@@ -105,7 +105,7 @@ public class GameAlphaBeta extends Game{
         for(int i = 0; i < moveNum; i++){
             move = moveLists.get(i);
             // 剪掉一些分数较低的着法
-            if((move.getScore() < 100 && i > 10) || i > 23) break;
+            if((move.getScore() < 100 && i > 10) || i > 20) break;
             searchNode++;    
 
             // 执行一个走法
@@ -157,7 +157,7 @@ public class GameAlphaBeta extends Game{
         Movement bestMoveSave = NONE_MOVE;
 
         outMessage("开始迭代加深搜索");
-        for(maxDepth = 1; maxDepth <= 6; maxDepth+=(maxDepth > 1 ? 2 : 1)){
+        for(maxDepth = 1; maxDepth <= fullSearchDepth; maxDepth+=(maxDepth > 1 ? 2 : 1)){
             score = search(maxDepth, NONE_SCORE, -NONE_SCORE);
             outMessage("完成深度为" + maxDepth + "的搜索，总已花费时间" + (System.currentTimeMillis() - startTime) + "ms");
 

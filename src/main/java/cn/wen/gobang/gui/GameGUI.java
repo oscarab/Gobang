@@ -93,7 +93,7 @@ public class GameGUI extends JFrame{
 		startGame.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				message = new Message();
-				game = getGame();
+				getGame();
 				if(isOpenMessage){
 					game.setMessage(message);
 					message.open();
@@ -162,14 +162,20 @@ public class GameGUI extends JFrame{
 		setLocation(100, 50);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-		game = getGame();
+		getGame();
 		updateInfo();
     }
 
-    private Game getGame(){
-        if(isHard == 0) return new GameMinMax();
-        else if(isHard == 1) return new GameAlphaBeta();
-        else return new GamePV();
+    private void getGame(){
+        if(isHard == 0) game = new GameMinMax();
+        else if(isHard == 1) {
+            game = new GameAlphaBeta();
+            game.setSearchDepth(6, 6);
+        } 
+        else {
+            game = new GamePV();
+            game.setSearchDepth(8, 4);
+        }
     }
 	/**
 	 * 获取按到的位置
